@@ -1,0 +1,35 @@
+name: build
+
+on: [pull_request, push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          target: armv7-unknown-linux-musleabihf
+          components: rustfmt, clippy
+
+      - run: sudo apt-get install binutils-arm-linux-gnueabihf
+
+      - uses: actions-rs/cargo@v1
+        name: cargo build
+        with:
+          command: build
+
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: -- -D warnings
+
+      - uses: actions-rs/cargo@v1
+        name: cargo fmt
+        with:
+          command: fmt
+          args: -- --check
