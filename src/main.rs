@@ -65,7 +65,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		.collect();
 
 	let mut app = tide::with_state(State {
-		doors: args.doors,
 		names: args.names,
 		pins: pins?
 			.into_iter()
@@ -138,7 +137,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[derive(Clone)]
 struct State {
-	doors: usize,
 	names: Vec<String>,
 	pins: Vec<Arc<Mutex<OutputPin>>>,
 }
