@@ -19,8 +19,8 @@ pub struct Args {
 	pub board: Board,
 
 	/// Number of doors
-	#[structopt(short, long)]
-	pub doors: u8,
+	#[structopt(short, long, name = "count")]
+	pub doors: usize,
 
 	/// Enable debug logging
 	#[structopt(long)]

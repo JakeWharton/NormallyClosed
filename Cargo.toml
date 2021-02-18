@@ -10,7 +10,6 @@ rppal = "0.11"
 structopt = "0.3"
 strum = "0.20"
 strum_macros = "0.20"
-simple-error = "0.2"
 tide = "0.16"
 async-std = { version = "1.8", features = ["attributes"] }
 tide-tracing = "0.0.8"

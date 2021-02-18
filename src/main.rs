@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::time::Duration;
 
 use async_std::sync::Arc;
@@ -6,7 +5,8 @@ use async_std::sync::Mutex;
 use async_std::task;
 use rppal::gpio::Gpio;
 use rppal::gpio::OutputPin;
-use simple_error::bail;
+use structopt::clap::Error;
+use structopt::clap::ErrorKind::InvalidValue;
 use tide::http::mime;
 use tide::Redirect;
 use tide::Response;
@@ -24,7 +24,7 @@ const GPIO_RELAY_2: u8 = 19;
 const GPIO_RELAY_3: u8 = 16;
 
 #[async_std::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let args = args::parse_args();
 
 	let subscriber = tracing_subscriber::fmt()
@@ -45,24 +45,27 @@ async fn main() -> Result<(), Box<dyn Error>> {
 	};
 	debug!("Relays pins {:?}", &relays);
 
-	let doors = args.doors;
-	if doors < 1 || doors > relays.len() as u8 {
-		bail!(
-			"Door count {} must not exceed available board relay count {}",
-			doors,
-			relays.len()
+	if args.doors < 1 || args.doors > relays.len() {
+		Error::with_description(
+			&format!(
+				"Door count {} must not exceed available board relay count {}",
+				args.doors,
+				relays.len()
+			),
+			InvalidValue,
 		)
+		.exit();
 	}
 
 	let gpio = Gpio::new()?;
 	let pins: Result<Vec<OutputPin>, _> = relays
 		.into_iter()
-		.take(doors as usize)
+		.take(args.doors)
 		.map(|pin| gpio.get(pin).map(|it| it.into_output()))
 		.collect();
 
 	let mut app = tide::with_state(State {
-		doors,
+		doors: args.doors,
 		pins: pins?
 			.into_iter()
 			.map(|pin| Arc::new(Mutex::new(pin)))
@@ -129,6 +132,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 #[derive(Clone)]
 struct State {
-	doors: u8,
+	doors: usize,
+	names: Vec<String>,
 	pins: Vec<Arc<Mutex<OutputPin>>>,
 }
