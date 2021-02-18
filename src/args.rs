@@ -4,18 +4,24 @@ use structopt::StructOpt;
 use strum::VariantNames;
 use strum_macros::EnumString;
 use strum_macros::EnumVariantNames;
+use tracing::debug;
+
+use crate::Door;
+use crate::Garage;
 
 #[derive(Debug, EnumString, EnumVariantNames)]
 #[strum()]
-pub enum Board {
+enum Board {
 	// Pimoroni automation HAT mini with 1 relay.
 	PIM213,
+	// Pimoroni automation pHAT with 1 relay.
+	PIM221,
 	// Pimoroni automation HAT with 3 relays.
 	PIM487,
 }
 
 #[derive(Debug, StructOpt)]
-pub struct Args {
+struct Args {
 	/// Automation HAT model
 	#[structopt(short, long, name = "model", possible_values = &Board::VARIANTS)]
 	pub board: Board,
@@ -27,19 +33,38 @@ pub struct Args {
 	/// User-friendly names for the doors
 	#[structopt(name = "NAME")]
 	pub names: Vec<String>,
-
-	/// Enable debug logging
-	#[structopt(long)]
-	pub debug: bool,
 }
 
-pub fn parse_args() -> Args {
-	let args = Args::from_args();
+pub fn parse_garage() -> Garage {
+	let args: Args = Args::from_args();
+	debug!("{:?}", &args);
+
+	let relays = match args.board {
+		// https://pinout.xyz/pinout/automation_hat_mini
+		Board::PIM213 => vec![16u8],
+		// https://pinout.xyz/pinout/automation_phat
+		Board::PIM221 => vec![16u8],
+		// https://pinout.xyz/pinout/automation_hat
+		Board::PIM487 => vec![13u8, 19u8, 16u8],
+	};
+	debug!("Relays pins {:?}", &relays);
+
+	if args.doors < 1 || args.doors > relays.len() {
+		Error::with_description(
+			&format!(
+				"Door count ({}) must not exceed available board relay count ({})",
+				args.doors,
+				relays.len()
+			),
+			InvalidValue,
+		)
+		.exit();
+	}
 
 	if args.names.len() > args.doors {
 		Error::with_description(
 			&format!(
-				"Name count {} must not exceed door count {}",
+				"Name count ({}) must not exceed door count ({})",
 				args.names.len(),
 				args.doors
 			),
@@ -48,5 +73,17 @@ pub fn parse_args() -> Args {
 		.exit();
 	}
 
-	args
+	let mut doors = vec![];
+	for i in 0..args.doors {
+		doors.push(Door {
+			name: args
+				.names
+				.get(i)
+				.map(|name| name.to_string())
+				.unwrap_or_else(|| format!("Door {}", i + 1)),
+			pin: relays[i],
+		});
+	}
+
+	Garage { doors }
 }

@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::time::Duration;
 
 use async_std::sync::Arc;
@@ -5,67 +6,43 @@ use async_std::sync::Mutex;
 use async_std::task;
 use rppal::gpio::Gpio;
 use rppal::gpio::OutputPin;
-use structopt::clap::Error;
-use structopt::clap::ErrorKind::InvalidValue;
 use tide::http::mime;
 use tide::Redirect;
 use tide::Response;
 use tide::StatusCode;
 use tide_tracing::TraceMiddleware;
 use tracing::debug;
-use tracing::Level;
-
-use args::Board;
 
 mod args;
 
-const GPIO_RELAY_1: u8 = 13;
-const GPIO_RELAY_2: u8 = 19;
-const GPIO_RELAY_3: u8 = 16;
+#[derive(Debug, Clone)]
+pub struct Door {
+	/// User-friendly name
+	pub name: String,
+	/// BCP GPIO pin number
+	pub pin: u8,
+}
+
+#[derive(Debug, Clone)]
+pub struct Garage {
+	pub doors: Vec<Door>,
+}
 
 #[async_std::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-	let args = args::parse_args();
+async fn main() -> Result<(), Box<dyn Error>> {
+	tracing_subscriber::fmt::init();
 
-	let subscriber = tracing_subscriber::fmt()
-		.with_max_level(if args.debug {
-			Level::DEBUG
-		} else {
-			Level::INFO
-		})
-		.finish();
-
-	tracing::subscriber::set_global_default(subscriber).expect("no global subscriber has been set");
-
-	debug!("{:?}", &args);
-
-	let relays = match args.board {
-		Board::PIM213 => vec![GPIO_RELAY_3],
-		Board::PIM487 => vec![GPIO_RELAY_1, GPIO_RELAY_2, GPIO_RELAY_3],
-	};
-	debug!("Relays pins {:?}", &relays);
-
-	if args.doors < 1 || args.doors > relays.len() {
-		Error::with_description(
-			&format!(
-				"Door count {} must not exceed available board relay count {}",
-				args.doors,
-				relays.len()
-			),
-			InvalidValue,
-		)
-		.exit();
-	}
+	let garage = args::parse_garage();
 
 	let gpio = Gpio::new()?;
-	let pins: Result<Vec<OutputPin>, _> = relays
-		.into_iter()
-		.take(args.doors)
-		.map(|pin| gpio.get(pin).map(|it| it.into_output()))
+	let pins: Result<Vec<OutputPin>, _> = garage
+		.doors
+		.iter()
+		.map(|door| gpio.get(door.pin).map(|it| it.into_output()))
 		.collect();
 
 	let mut app = tide::with_state(State {
-		names: args.names,
+		doors: garage.doors,
 		pins: pins?
 			.into_iter()
 			.map(|pin| Arc::new(Mutex::new(pin)))
@@ -86,12 +63,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 <body>
 <h1>Garage Pie</h1>"#
 			.to_string();
-		for i in 1..=state.doors {
-			let name = if i <= state.names.len() {
-				state.names[i - 1].to_string()
-			} else {
-				format!("Door {}", i)
-			};
+		for i in 0..state.pins.len() {
+			let name = &state.doors[i].name;
 			html.push_str(&format!(
 				r#"<form action="/door/{}" method="post">
 <label>{} <input type="submit" value="Toggle"></label>
@@ -113,11 +86,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 			let state = req.state();
 
 			let id: usize = req.param("id")?.parse()?;
-			if id < 1 || id > state.pins.len() {
+			if id >= state.pins.len() {
 				return Ok(Response::new(StatusCode::BadRequest));
 			}
 
-			let pin_arc = state.pins[id - 1].clone();
+			let pin_arc = state.pins[id].clone();
 			let mut pin = pin_arc.lock().await;
 			debug!("Setting pin {} HIGH", pin.pin());
 			pin.set_high();
@@ -137,6 +110,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[derive(Clone)]
 struct State {
-	names: Vec<String>,
+	doors: Vec<Door>,
 	pins: Vec<Arc<Mutex<OutputPin>>>,
 }
