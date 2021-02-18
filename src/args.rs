@@ -17,7 +17,7 @@ pub enum Board {
 #[derive(Debug, StructOpt)]
 pub struct Args {
 	/// Automation HAT model
-	#[structopt(short, long, possible_values = &Board::VARIANTS)]
+	#[structopt(short, long, name = "model", possible_values = &Board::VARIANTS)]
 	pub board: Board,
 
 	/// Number of doors
