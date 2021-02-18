@@ -3,7 +3,7 @@ name: build
 on: [pull_request, push]
 
 jobs:
-  build:
+  debug_build_and_checks:
     runs-on: ubuntu-latest
 
     steps:
@@ -14,7 +14,7 @@ jobs:
           toolchain: stable
           profile: minimal
           target: armv7-unknown-linux-musleabihf
-          components: rustfmt, clippy
+          components: clippy
 
       - run: sudo apt-get install binutils-arm-linux-gnueabihf
 
@@ -27,6 +27,49 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: -- -D warnings
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: garage_pie_debug
+          path: target/armv7-unknown-linux-musleabihf/debug/garage_pie
+
+  relase_build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          target: armv7-unknown-linux-musleabihf
+
+      - run: sudo apt-get install binutils-arm-linux-gnueabihf
+
+      - uses: actions-rs/cargo@v1
+        name: cargo build
+        with:
+          command: build
+          args: --release
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: garage_pie
+          path: target/armv7-unknown-linux-musleabihf/release/garage_pie
+
+  rustfmt:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          profile: minimal
+          components: rustfmt
 
       - uses: actions-rs/cargo@v1
         name: cargo fmt
