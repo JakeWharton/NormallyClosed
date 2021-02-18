@@ -23,18 +23,18 @@ enum Board {
 struct Args {
 	/// Automation HAT model
 	#[structopt(short, long, name = "model", possible_values = &Board::VARIANTS)]
-	pub board: Board,
+	board: Board,
 
 	/// Number of doors
 	#[structopt(short, long, name = "count")]
-	pub doors: usize,
+	doors: usize,
 
 	/// User-friendly names for the doors
 	#[structopt(name = "NAME")]
-	pub names: Vec<String>,
+	names: Vec<String>,
 }
 
-pub fn parse_garage() -> Vec<Door> {
+pub fn parse_doors() -> Vec<Door> {
 	let args: Args = Args::from_args();
 	debug!("{:?}", &args);
 

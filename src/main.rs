@@ -19,10 +19,10 @@ pub struct Door {
 async fn main() -> Result<(), Box<dyn Error>> {
 	tracing_subscriber::fmt::init();
 
-	let doors = args::parse_garage();
+	let doors = args::parse_doors();
 
 	let gpio = Gpio::new()?;
-	let garage = pi::create_garage(gpio, doors)?;
+	let garage = Garage::new(gpio, doors)?;
 
 	http::listen(garage).await?;
 
