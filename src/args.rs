@@ -1,3 +1,5 @@
+use structopt::clap::Error;
+use structopt::clap::ErrorKind::InvalidValue;
 use structopt::StructOpt;
 use strum::VariantNames;
 use strum_macros::EnumString;
@@ -22,11 +24,29 @@ pub struct Args {
 	#[structopt(short, long, name = "count")]
 	pub doors: usize,
 
+	/// User-friendly names for the doors
+	#[structopt(name = "NAME")]
+	pub names: Vec<String>,
+
 	/// Enable debug logging
 	#[structopt(long)]
 	pub debug: bool,
 }
 
 pub fn parse_args() -> Args {
-	Args::from_args()
+	let args = Args::from_args();
+
+	if args.names.len() > args.doors {
+		Error::with_description(
+			&format!(
+				"Name count {} must not exceed door count {}",
+				args.names.len(),
+				args.doors
+			),
+			InvalidValue,
+		)
+		.exit();
+	}
+
+	args
 }

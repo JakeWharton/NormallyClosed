@@ -66,6 +66,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	let mut app = tide::with_state(State {
 		doors: args.doors,
+		names: args.names,
 		pins: pins?
 			.into_iter()
 			.map(|pin| Arc::new(Mutex::new(pin)))
@@ -87,11 +88,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 <h1>Garage Pie</h1>"#
 			.to_string();
 		for i in 1..=state.doors {
+			let name = if i <= state.names.len() {
+				state.names[i - 1].to_string()
+			} else {
+				format!("Door {}", i)
+			};
 			html.push_str(&format!(
 				r#"<form action="/door/{}" method="post">
-<label>Door {} <input type="submit" value="Toggle"></label>
+<label>{} <input type="submit" value="Toggle"></label>
 </form>"#,
-				i, i
+				i, name
 			));
 		}
 		html.push_str(
