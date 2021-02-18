@@ -7,7 +7,6 @@ use strum_macros::EnumVariantNames;
 use tracing::debug;
 
 use crate::Door;
-use crate::Garage;
 
 #[derive(Debug, EnumString, EnumVariantNames)]
 #[strum()]
@@ -35,7 +34,7 @@ struct Args {
 	pub names: Vec<String>,
 }
 
-pub fn parse_garage() -> Garage {
+pub fn parse_garage() -> Vec<Door> {
 	let args: Args = Args::from_args();
 	debug!("{:?}", &args);
 
@@ -85,5 +84,5 @@ pub fn parse_garage() -> Garage {
 		});
 	}
 
-	Garage { doors }
+	doors
 }
