@@ -50,11 +50,11 @@ pub fn parse_doors() -> Vec<Door> {
 		}
 		match board {
 			// https://pinout.xyz/pinout/automation_hat_mini
-			Board::PIM213 => vec![16u8],
+			Board::PIM487 => vec![16u8],
 			// https://pinout.xyz/pinout/automation_phat
 			Board::PIM221 => vec![16u8],
 			// https://pinout.xyz/pinout/automation_hat
-			Board::PIM487 => vec![13u8, 19u8, 16u8],
+			Board::PIM213 => vec![13u8, 19u8, 16u8],
 		}
 	} else {
 		if args.gpio.is_empty() {
