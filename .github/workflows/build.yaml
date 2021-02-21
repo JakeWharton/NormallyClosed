@@ -1,6 +1,11 @@
 name: build
 
-on: [pull_request, push]
+on:
+  pull_request:
+  push:
+    branches:
+      - '**'
+      - '!trunk'
 
 jobs:
   debug_build_and_checks:
