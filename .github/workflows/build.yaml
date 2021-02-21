@@ -37,7 +37,7 @@ jobs:
           name: garage_pie_debug
           path: target/armv7-unknown-linux-musleabihf/debug/garage_pie
 
-  relase_build:
+  release_build:
     runs-on: ubuntu-latest
 
     steps:
