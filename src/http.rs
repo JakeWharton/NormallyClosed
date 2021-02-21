@@ -1,4 +1,7 @@
 use crate::Garage;
+use async_std::net::IpAddr;
+use async_std::net::Ipv4Addr;
+use async_std::net::SocketAddr;
 use std::io;
 use tide::http::mime;
 use tide::Redirect;
@@ -6,7 +9,7 @@ use tide::Response;
 use tide::StatusCode::BadRequest;
 use tide_tracing::TraceMiddleware;
 
-pub async fn listen(garage: Garage) -> io::Result<()> {
+pub async fn listen(garage: Garage, port: u16) -> io::Result<()> {
 	let mut app = tide::with_state(garage);
 	app.with(TraceMiddleware::new());
 
@@ -54,5 +57,6 @@ pub async fn listen(garage: Garage) -> io::Result<()> {
 			Ok(Redirect::new("/").into())
 		});
 
-	app.listen("0.0.0.0:8080").await
+	let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
+	app.listen(address).await
 }
