@@ -106,6 +106,8 @@ jobs:
           username: jakewharton
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
+      - run: echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+
       - uses: docker/build-push-action@v2
         with:
           push: true
