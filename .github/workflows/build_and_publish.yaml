@@ -119,6 +119,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
 
       - uses: actions/download-artifact@v2
+        if: startsWith(github.ref, 'refs/tags/')
 
       - uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
