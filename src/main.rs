@@ -57,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 			),
 			InvalidValue,
 		)
-			.exit();
+		.exit();
 	}
 
 	if args.names.len() > args.doors {
@@ -69,7 +69,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 			),
 			InvalidValue,
 		)
-			.exit();
+		.exit();
 	}
 
 	let mut doors = vec![];
@@ -87,11 +87,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let gpio = Gpio::new()?;
 	let garage = Garage::new(gpio, doors)?;
 
-	http::listen(garage).await?;
+	http::listen(garage, args.http_port).await?;
 
 	Ok(())
 }
-
 
 #[derive(Debug, EnumString, EnumVariantNames)]
 #[strum()]
@@ -122,4 +121,8 @@ struct Args {
 	/// User-friendly names for the doors
 	#[structopt(name = "NAME")]
 	names: Vec<String>,
+
+	/// HTTP port
+	#[structopt(long, name = "port", default_value = "31415")]
+	http_port: u16,
 }
