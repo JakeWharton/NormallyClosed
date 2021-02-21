@@ -57,6 +57,6 @@ pub async fn listen(garage: Garage, port: u16) -> io::Result<()> {
 			Ok(Redirect::new("/").into())
 		});
 
-	let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
+	let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), port);
 	app.listen(address).await
 }
