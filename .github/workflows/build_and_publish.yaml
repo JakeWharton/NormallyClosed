@@ -82,6 +82,8 @@ jobs:
           path: target/armv7-unknown-linux-musleabihf/release/garage_pie
 
   docker:
+    runs-on: ubuntu-latest
+
     needs:
       - rustfmt
       - debug_build_and_checks
