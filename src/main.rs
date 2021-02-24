@@ -3,9 +3,6 @@ use structopt::clap::ArgGroup;
 use structopt::clap::Error;
 use structopt::clap::ErrorKind::InvalidValue;
 use structopt::StructOpt;
-use strum::VariantNames;
-use strum_macros::EnumString;
-use strum_macros::EnumVariantNames;
 use tracing::debug;
 
 use crate::pi::Garage;
@@ -32,13 +29,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		if !args.gpio.is_empty() {
 			Error::with_description("Specify one of --board or --gpio, not both", InvalidValue).exit();
 		}
-		match board {
+		match board.as_ref() {
 			// https://pinout.xyz/pinout/automation_hat_mini
-			Board::PIM487 => vec![16u8],
+			"PIM487" => vec![16u8],
 			// https://pinout.xyz/pinout/automation_phat
-			Board::PIM221 => vec![16u8],
+			"PIM221" => vec![16u8],
 			// https://pinout.xyz/pinout/automation_hat
-			Board::PIM213 => vec![13u8, 19u8, 16u8],
+			"PIM213" => vec![13u8, 19u8, 16u8],
+			// https://bc-robotics.com/shop/raspberry-pi-zero-relay-hat/
+			// https://bc-robotics.com/shop/raspberry-pi-zero-relay-hat-assembled/
+			"RAS-109" | "RAS-194" => vec![4u8, 17u8],
+			_ => {
+				Error::with_description("Unknown board model", InvalidValue).exit();
+			}
 		}
 	} else {
 		if args.gpio.is_empty() {
@@ -92,23 +95,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	Ok(())
 }
 
-#[derive(Debug, EnumString, EnumVariantNames)]
-#[strum()]
-enum Board {
-	// Pimoroni automation HAT mini with 1 relay.
-	PIM213,
-	// Pimoroni automation pHAT with 1 relay.
-	PIM221,
-	// Pimoroni automation HAT with 3 relays.
-	PIM487,
-}
-
 #[derive(Debug, StructOpt)]
 #[structopt(group = ArgGroup::with_name("pins").required(true))]
 struct Args {
-	/// Manufactured HAT with preconfigured relays
-	#[structopt(long, name = "model", possible_values = &Board::VARIANTS, group = "pins")]
-	board: Option<Board>,
+	/// Manufactured HAT board with preconfigured relays
+	///
+	/// PIM213 - Pimoroni automation HAT mini with 1 relay
+	///{n}PIM221 - Pimoroni automation pHAT with 1 relay
+	///{n}PIM487 - Pimoroni automation HAT with 3 relays
+	///{n}RAS-109 - BC Robotics relay HAT with 2 relays.
+	///{n}RAS-194 - BC Robotics relay HAT (assembled) with 2 relays.
+	///{n}
+	#[structopt(long, name = "model", group = "pins")]
+	board: Option<String>,
 
 	/// Custom BCP GPIO pin number to trigger a door relay
 	#[structopt(long, name = "pin", group = "pins")]
