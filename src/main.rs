@@ -1,4 +1,3 @@
-use rppal::gpio::Gpio;
 use structopt::clap::ArgGroup;
 use structopt::clap::Error;
 use structopt::clap::ErrorKind::InvalidValue;
@@ -87,8 +86,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		});
 	}
 
-	let gpio = Gpio::new()?;
-	let garage = Garage::new(gpio, doors)?;
+	let garage = Garage::new(doors)?;
 
 	http::listen(garage, args.http_port).await;
 
