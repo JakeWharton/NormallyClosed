@@ -8,6 +8,27 @@ use warp::Filter;
 use warp::Rejection;
 use warp::Reply;
 
+pub struct Config {
+	pub port: u16,
+}
+
+pub async fn listen(config: Config, garage: Garage) {
+	let index = warp::path::end()
+		.and(warp::get())
+		.and(with_garage(garage.clone()))
+		.and_then(self::index);
+
+	let door_trigger = warp::path!("door" / usize)
+		.and(warp::post())
+		.and(with_garage(garage))
+		.and_then(self::trigger);
+
+	let routes = index.or(door_trigger).with(warp::trace::request());
+
+	let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), config.port);
+	warp::serve(routes).run(address).await
+}
+
 fn with_garage(garage: Garage) -> impl Filter<Extract = (Garage,), Error = Infallible> + Clone {
 	warp::any().map(move || garage.clone())
 }
@@ -47,21 +68,4 @@ async fn trigger(id: usize, garage: Garage) -> Result<impl Reply, Rejection> {
 	garage.doors[id].trigger().await;
 
 	Ok(warp::redirect::temporary(Uri::from_static("/")))
-}
-
-pub async fn listen(garage: Garage, port: u16) {
-	let index = warp::path::end()
-		.and(warp::get())
-		.and(with_garage(garage.clone()))
-		.and_then(self::index);
-
-	let door_trigger = warp::path!("door" / usize)
-		.and(warp::post())
-		.and(with_garage(garage))
-		.and_then(self::trigger);
-
-	let routes = index.or(door_trigger).with(warp::trace::request());
-
-	let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), port);
-	warp::serve(routes).run(address).await
 }

@@ -7,6 +7,7 @@ use tracing::debug;
 use crate::pi::Garage;
 
 mod http;
+mod mqtt;
 mod pi;
 
 #[derive(Debug, Clone)]
@@ -88,7 +89,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	let garage = Garage::new(doors)?;
 
-	http::listen(garage, args.http_port).await;
+	let http_config = http::Config {
+		port: args.http_port,
+	};
+	let http = http::listen(http_config, garage.clone());
+
+	let mqtt_config = mqtt::Config {
+	};
+	let mqtt = mqtt::listen(mqtt_config, garage);
+
+	let (_, mqtt) = tokio::join!(http, mqtt);
+	mqtt?;
 
 	Ok(())
 }
