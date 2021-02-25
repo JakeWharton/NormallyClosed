@@ -1,22 +1,19 @@
 use crate::Garage;
-use async_std::net::IpAddr;
-use async_std::net::Ipv4Addr;
-use async_std::net::SocketAddr;
-use std::io;
-use tide::http::mime;
-use tide::Redirect;
-use tide::Response;
-use tide::StatusCode::BadRequest;
-use tide_tracing::TraceMiddleware;
+use std::convert::Infallible;
+use std::net::IpAddr;
+use std::net::Ipv4Addr;
+use std::net::SocketAddr;
+use warp::http::Uri;
+use warp::Filter;
+use warp::Rejection;
+use warp::Reply;
 
-pub async fn listen(garage: Garage, port: u16) -> io::Result<()> {
-	let mut app = tide::with_state(garage);
-	app.with(TraceMiddleware::new());
+fn with_garage(garage: Garage) -> impl Filter<Extract = (Garage,), Error = Infallible> + Clone {
+	warp::any().map(move || garage.clone())
+}
 
-	app.at("/").get(|req: tide::Request<Garage>| async move {
-		let state = req.state();
-
-		let mut html = r#"<!DOCTYPE html>
+async fn index(garage: Garage) -> Result<impl Reply, Infallible> {
+	let mut html = r#"<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -25,38 +22,46 @@ pub async fn listen(garage: Garage, port: u16) -> io::Result<()> {
 </head>
 <body>
 <h1>Garage Pie</h1>"#
-			.to_string();
-		for (i, door) in state.doors.iter().enumerate() {
-			html.push_str(&format!(
-				r#"<form action="/door/{}" method="post">
+		.to_string();
+	for (i, door) in garage.doors.iter().enumerate() {
+		html.push_str(&format!(
+			r#"<form action="/door/{}" method="post">
 <label>{} <input type="submit" value="Toggle"></label>
 </form>"#,
-				i, door.door.name
-			));
-		}
-		html.push_str(
-			r#"</body>
+			i, door.door.name
+		));
+	}
+	html.push_str(
+		r#"</body>
 </html>"#,
-		);
+	);
 
-		Ok(Response::builder(200).body(html).content_type(mime::HTML))
-	});
+	Ok(warp::reply::html(html))
+}
 
-	app
-		.at("/door/:id")
-		.post(|req: tide::Request<Garage>| async move {
-			let state = req.state();
+async fn trigger(id: usize, garage: Garage) -> Result<impl Reply, Rejection> {
+	if id >= garage.doors.len() {
+		return Err(warp::reject());
+	}
 
-			let id: usize = req.param("id")?.parse()?;
-			if id >= state.doors.len() {
-				return Ok(Response::new(BadRequest));
-			}
+	garage.doors[id].trigger().await;
 
-			state.doors[id].trigger().await;
+	Ok(warp::redirect::temporary(Uri::from_static("/")))
+}
 
-			Ok(Redirect::new("/").into())
-		});
+pub async fn listen(garage: Garage, port: u16) {
+	let index = warp::path::end()
+		.and(warp::get())
+		.and(with_garage(garage.clone()))
+		.and_then(self::index);
+
+	let door_trigger = warp::path!("door" / usize)
+		.and(warp::post())
+		.and(with_garage(garage))
+		.and_then(self::trigger);
+
+	let routes = index.or(door_trigger).with(warp::trace::request());
 
 	let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), port);
-	app.listen(address).await
+	warp::serve(routes).run(address).await
 }

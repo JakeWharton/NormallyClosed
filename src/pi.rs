@@ -1,11 +1,10 @@
 use crate::Door;
-use async_std::sync::Arc;
-use async_std::sync::Mutex;
-use async_std::task;
 use rppal::gpio::Gpio;
 use rppal::gpio::OutputPin;
 use std::error::Error;
+use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::Mutex;
 use tracing::debug;
 
 #[derive(Clone)]
@@ -45,7 +44,7 @@ impl DoorRelay {
 		debug!("Setting pin {} HIGH", pin.pin());
 		pin.set_high();
 
-		task::sleep(Duration::from_millis(200)).await;
+		tokio::time::sleep(Duration::from_millis(200)).await;
 
 		debug!("Setting pin {} LOW", pin.pin());
 		pin.set_low();

@@ -18,7 +18,7 @@ pub struct Door {
 	pub pin: u8,
 }
 
-#[async_std::main]
+#[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	tracing_subscriber::fmt::init();
 
@@ -90,7 +90,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let gpio = Gpio::new()?;
 	let garage = Garage::new(gpio, doors)?;
 
-	http::listen(garage, args.http_port).await?;
+	http::listen(garage, args.http_port).await;
 
 	Ok(())
 }
