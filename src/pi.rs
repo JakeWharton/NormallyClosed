@@ -13,7 +13,9 @@ pub struct Garage {
 }
 
 impl Garage {
-	pub fn new(gpio: Gpio, doors: Vec<Door>) -> Result<Garage, Box<dyn Error>> {
+	pub fn new(doors: Vec<Door>) -> Result<Garage, Box<dyn Error>> {
+		let gpio = Gpio::new()?;
+
 		let door_relays: Result<Vec<DoorRelay>, _> = doors
 			.into_iter()
 			.map(|door| {
