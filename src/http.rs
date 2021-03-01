@@ -18,10 +18,10 @@ async fn index(garage: Garage) -> Result<impl Reply, Infallible> {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Garage Pie</title>
+<title>Normally Closed</title>
 </head>
 <body>
-<h1>Garage Pie</h1>"#
+<h1>Normally Closed</h1>"#
 		.to_string();
 	for (i, door) in garage.doors.iter().enumerate() {
 		html.push_str(&format!(

@@ -1,6 +1,6 @@
-# Garage Pie
+# Normally Closed
 
-Open and close your garage door with a Raspberry Pi.
+Open and close your garage door (or similar) with a Raspberry Pi.
 
 Sometimes I forget to close my garage door when I leave the house.
 Sometimes I need to let someone into my house when I am not home.

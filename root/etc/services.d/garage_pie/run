@@ -1,5 +1,5 @@
 #!/usr/bin/with-contenv sh
 
-/app/garage_pie \
+/app/normally-closed \
 	--http-port 80 \
-	"${GARAGE_PIE_ARGS[@]}"
+	"${NC_ARGS[@]}"

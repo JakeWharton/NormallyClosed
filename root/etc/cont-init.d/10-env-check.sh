@@ -1,6 +1,6 @@
 #!/usr/bin/with-contenv sh
 
-if [ -z "$API_SECRET" ]; then
+if [ -z "$NC_ARGS" ]; then
 	echo "
-ERROR: 'GARAGE_PIE_ARGS' environment variable not set"
+ERROR: 'NC_ARGS' environment variable not set"
 fi

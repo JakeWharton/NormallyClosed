@@ -34,8 +34,8 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: garage_pie_debug
-          path: target/armv7-unknown-linux-musleabihf/debug/garage_pie
+          name: normally-closed_debug
+          path: target/armv7-unknown-linux-musleabihf/debug/normally-closed
 
   release_build:
     runs-on: ubuntu-latest
@@ -59,8 +59,8 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: garage_pie
-          path: target/armv7-unknown-linux-musleabihf/release/garage_pie
+          name: normally-closed
+          path: target/armv7-unknown-linux-musleabihf/release/normally-closed
 
   rustfmt:
     runs-on: ubuntu-latest

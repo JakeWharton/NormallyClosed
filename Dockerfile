@@ -31,7 +31,7 @@ ENV \
     S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
     # Show full backtraces for crashes.
     RUST_BACKTRACE=full \
-    GARAGE_PIE_ARGS=""
+    NC_ARGS=""
 COPY root/ /
 WORKDIR /app
-COPY --from=rust /app/target/armv7-unknown-linux-musleabihf/release/garage_pie ./
+COPY --from=rust /app/target/armv7-unknown-linux-musleabihf/release/normally-closed ./

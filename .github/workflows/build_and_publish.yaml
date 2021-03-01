@@ -53,8 +53,8 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: garage_pie_debug
-          path: target/armv7-unknown-linux-musleabihf/debug/garage_pie
+          name: normally-closed_debug
+          path: target/armv7-unknown-linux-musleabihf/debug/normally-closed
 
   release_build:
     runs-on: ubuntu-latest
@@ -78,8 +78,8 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: garage_pie
-          path: target/armv7-unknown-linux-musleabihf/release/garage_pie
+          name: normally-closed
+          path: target/armv7-unknown-linux-musleabihf/release/normally-closed
 
   docker:
     runs-on: ubuntu-latest
@@ -94,8 +94,8 @@ jobs:
         id: docker_meta
         with:
           images: |
-            jakewharton/garage-pie
-            ghcr.io/jakewharton/garage-pie
+            jakewharton/normally-closed
+            ghcr.io/jakewharton/normally-closed
           tag-semver: |
             {{version}}
             {{major}}
@@ -126,7 +126,7 @@ jobs:
         with:
           body: ${{ steps.release_notes.outputs.release_notes }}
           files: |
-            garage_pie
-            garage_pie_debug
+            normally-closed
+            normally-closed_debug
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

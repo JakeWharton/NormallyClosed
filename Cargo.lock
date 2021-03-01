@@ -212,18 +212,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "garage_pie"
-version = "0.1.0"
-dependencies = [
- "rppal",
- "structopt",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "warp",
-]
-
-[[package]]
 name = "generic-array"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -453,6 +441,18 @@ checksum = "5a33c1b55807fbed163481b5ba66db4b2fa6cde694a5027be10fb724206c5897"
 dependencies = [
  "socket2",
  "winapi",
+]
+
+[[package]]
+name = "normally-closed"
+version = "0.1.0"
+dependencies = [
+ "rppal",
+ "structopt",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "warp",
 ]
 
 [[package]]
