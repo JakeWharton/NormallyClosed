@@ -35,3 +35,6 @@ ENV \
 COPY root/ /
 WORKDIR /app
 COPY --from=rust /app/target/armv7-unknown-linux-musleabihf/release/normally-closed ./
+
+HEALTHCHECK --interval=1m --timeout=3s \
+  CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
