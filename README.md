@@ -1,4 +1,4 @@
-# Normally Closed
+![Normally Closed](images/logo.png)
 
 Open and close your garage door (or similar) with a Raspberry Pi.
 
