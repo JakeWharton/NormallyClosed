@@ -3,7 +3,8 @@ use std::convert::Infallible;
 use std::net::IpAddr;
 use std::net::Ipv4Addr;
 use std::net::SocketAddr;
-use warp::http::Uri;
+use warp::http::HeaderValue;
+use warp::http::StatusCode;
 use warp::Filter;
 use warp::Rejection;
 use warp::Reply;
@@ -46,7 +47,13 @@ async fn trigger(id: usize, garage: Garage) -> Result<impl Reply, Rejection> {
 
 	garage.doors[id].trigger().await;
 
-	Ok(warp::redirect::temporary(Uri::from_static("/")))
+	// TODO Use see_other when https://github.com/seanmonstar/warp/pull/813 is released.
+	//  Ok(warp::redirect::see_other(Uri::from_static("/")))
+	Ok(warp::reply::with_header(
+		StatusCode::SEE_OTHER,
+		warp::http::header::LOCATION,
+		HeaderValue::from_static("/"),
+	))
 }
 
 pub async fn listen(garage: Garage, port: u16) {
