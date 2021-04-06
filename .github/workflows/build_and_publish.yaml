@@ -90,7 +90,7 @@ jobs:
       - release_build
 
     steps:
-      - uses: crazy-max/ghaction-docker-meta@v1
+      - uses: crazy-max/ghaction-docker-meta@v2.2.1
         id: docker_meta
         with:
           images: |
