@@ -37,24 +37,23 @@ jobs:
         with:
           toolchain: stable
           profile: minimal
-          target: armv7-unknown-linux-musleabihf
           components: clippy
-
-      - run: sudo apt-get install binutils-arm-linux-gnueabihf
 
       - uses: actions-rs/cargo@v1
         name: cargo build
         with:
           command: build
+          args: --no-default-features
+
+      - uses: actions-rs/cargo@v1
+        name: cargo test
+        with:
+          command: test
+          args: --no-default-features
 
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: normally-closed_debug
-          path: target/armv7-unknown-linux-musleabihf/debug/normally-closed
 
   release_build:
     runs-on: ubuntu-latest
@@ -74,7 +73,7 @@ jobs:
         name: cargo build
         with:
           command: build
-          args: --release
+          args: --release --target armv7-unknown-linux-musleabihf
 
       - uses: actions/upload-artifact@v2
         with:
@@ -127,6 +126,5 @@ jobs:
           body: ${{ steps.release_notes.outputs.release_notes }}
           files: |
             normally-closed
-            normally-closed_debug
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
