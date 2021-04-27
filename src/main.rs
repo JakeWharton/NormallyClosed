@@ -19,7 +19,7 @@ mod garage;
 mod gpio;
 
 #[cfg(feature = "rpi")]
-mod gpio_rpal;
+mod gpio_rppal;
 
 mod http;
 
@@ -88,7 +88,7 @@ fn create_garage(config: &GarageConfig) -> Result<Garage, Box<dyn Error>> {
 
 #[cfg(feature = "rpi")]
 fn create_gpio() -> Result<Box<dyn Gpio>, Box<dyn Error>> {
-	let gpio = gpio_rpal::HardwareGpio::new()?;
+	let gpio = gpio_rppal::RppalGpio::new()?;
 	Ok(Box::new(gpio) as Box<dyn Gpio>)
 }
 

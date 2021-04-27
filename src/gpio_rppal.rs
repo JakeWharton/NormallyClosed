@@ -1,33 +1,33 @@
 use crate::gpio::Gpio;
 use crate::gpio::GpioPin;
-use rppal::gpio::Gpio as RppalGpio;
+use rppal::gpio::Gpio as RealGpio;
 use rppal::gpio::OutputPin;
 use std::error::Error;
 
-pub struct HardwareGpio {
-	gpio: RppalGpio,
+pub struct RppalGpio {
+	gpio: RealGpio,
 }
 
-impl HardwareGpio {
-	pub fn new() -> Result<HardwareGpio, Box<dyn Error>> {
-		let gpio = RppalGpio::new()?;
-		Ok(HardwareGpio { gpio })
+impl RppalGpio {
+	pub fn new() -> Result<RppalGpio, Box<dyn Error>> {
+		let gpio = RealGpio::new()?;
+		Ok(RppalGpio { gpio })
 	}
 }
 
-impl Gpio for HardwareGpio {
+impl Gpio for RppalGpio {
 	fn get(&self, pin: u8) -> Result<Box<dyn GpioPin>, Box<dyn Error>> {
 		let output_pin = self.gpio.get(pin)?.into_output();
-		let gpio_pin = HardwareGpioPin { pin: output_pin };
+		let gpio_pin = RppalGpioPin { pin: output_pin };
 		Ok(Box::new(gpio_pin))
 	}
 }
 
-struct HardwareGpioPin {
+struct RppalGpioPin {
 	pin: OutputPin,
 }
 
-impl GpioPin for HardwareGpioPin {
+impl GpioPin for RppalGpioPin {
 	fn pin(&self) -> u8 {
 		self.pin.pin()
 	}
