@@ -9,6 +9,11 @@ use crate::config::GarageConfig;
 use crate::config::RelayConfig;
 use crate::garage::Garage;
 use crate::gpio::Gpio;
+use crate::board_simple::SimpleBoard;
+
+mod board;
+
+mod board_simple;
 
 mod cli;
 
@@ -61,6 +66,8 @@ fn create_garage(config: &GarageConfig) -> Result<Garage, Box<dyn Error>> {
 		RelayConfig::PinBased { pins } => pins.to_vec(),
 	};
 	debug!("Relays pins {:?}", &pins);
+
+	let board = SimpleBoard::new(&pins);
 
 	if config.doors.is_empty() {
 		ClapError::with_description("No doors defined", InvalidValue).exit();
