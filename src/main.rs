@@ -8,6 +8,7 @@ use tracing::debug;
 use crate::config::GarageConfig;
 use crate::config::RelayConfig;
 use crate::garage::Garage;
+use crate::gpio::Gpio;
 
 mod cli;
 
@@ -15,10 +16,12 @@ mod config;
 
 mod garage;
 
-mod http;
+mod gpio;
 
 #[cfg(feature = "rpi")]
-mod pi;
+mod gpio_rpal;
+
+mod http;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -79,22 +82,17 @@ fn create_garage(config: &GarageConfig) -> Result<Garage, Box<dyn Error>> {
 		.exit();
 	}
 
-	create_garage_implementation(config, &pins)
+	let gpio = create_gpio()?;
+	Garage::new(&*gpio, &config, &pins)
 }
 
 #[cfg(feature = "rpi")]
-fn create_garage_implementation(
-	config: &GarageConfig,
-	pins: &Vec<u8>,
-) -> Result<Garage, Box<dyn Error>> {
-	pi::create_garage(config, pins)
+fn create_gpio() -> Result<Box<dyn Gpio>, Box<dyn Error>> {
+	let gpio = gpio_rpal::HardwareGpio::new()?;
+	Ok(Box::new(gpio) as Box<dyn Gpio>)
 }
 
 #[cfg(not(feature = "rpi"))]
-fn create_garage_implementation(
-	_config: &GarageConfig,
-	_pins: &Vec<u8>,
-) -> Result<Garage, Box<dyn Error>> {
-	eprintln!("Cannot start without 'rpi' feature");
-	std::process::exit(1);
+fn create_gpio() -> Result<Box<dyn Gpio>, Box<dyn Error>> {
+	Ok(Box::new(gpio::LoggingGpio::new()) as Box<dyn Gpio>)
 }
