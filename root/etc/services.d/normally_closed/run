@@ -2,4 +2,4 @@
 
 exec /app/normally-closed \
 	--http-port 80 \
-	/data/config.toml
+	/config/config.toml
