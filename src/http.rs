@@ -22,18 +22,43 @@ async fn index(garage: Garage) -> Result<impl Reply, Infallible> {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Normally Closed</title>
+<style type="text/css">
+body {
+	background-color: #415A8D;
+	color: #fff;
+	font-family: Arial, Helvetica, sans-serif;
+}
+form {
+	display: inline-block;
+}
+input {
+	font-size: 1.2em;
+	padding: 1em;
+}
+footer {
+	margin-top: 50px;
+	font-size: .8em;
+}
+a, a:visited, a:hover, a:active {
+	color: #fff;
+}
+a:hover {
+	text-decoration: underline;
+}
+</style>
 </head>
 <body>
-<h1>Normally Closed</h1>"#
-		.to_string();
+"#
+	.to_string();
 	for (i, door) in garage.doors.iter().enumerate() {
 		match door {
 			Door::Toggle { name, .. } => {
 				html.push_str(&format!(
-					r#"<h2>{}</h2>
+					r#"<h1>{}</h1>
 		<form action="/door/{}/toggle" method="post">
 		<input type="submit" value="Toggle">
-		</form>"#,
+		</form>
+"#,
 					name, i
 				));
 			}
@@ -44,20 +69,22 @@ async fn index(garage: Garage) -> Result<impl Reply, Infallible> {
 				stop_button,
 			} => {
 				html.push_str(&format!(
-					r#"<h2>{}</h2>
+					r#"<h1>{}</h1>
 		<form action="/door/{}/open" method="post">
 		<input type="submit" value="Open">
 		</form>
 		<form action="/door/{}/close" method="post">
 		<input type="submit" value="Close">
-		</form>"#,
+		</form>
+"#,
 					name, i, i
 				));
 				if stop_button.is_some() {
 					html.push_str(&format!(
 						r#"<form action="/door/{}/stop" method="post">
 		<input type="submit" value="Stop">
-		</form>"#,
+		</form>
+"#,
 						i
 					));
 				}
@@ -65,7 +92,8 @@ async fn index(garage: Garage) -> Result<impl Reply, Infallible> {
 		};
 	}
 	html.push_str(
-		r#"</body>
+		r#"<footer>Powered by <a href="https://github.com/JakeWharton/NormallyClosed">NormallyClosed</a>.</footer>
+	</body>
 </html>"#,
 	);
 
