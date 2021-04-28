@@ -296,6 +296,16 @@ stop_relay = 3  # OPTIONAL!
 In either form, all doors must have names, relays use 1-based indexing, and no door may use the same relay as another.
 
 
+## Usage
+
+Visit the website in a browser.
+Click the buttons!
+
+![Example screenshot of website in browser](images/screenshot.png)
+
+Your URL will depend on the hostname of the Pi and the port you choose.
+
+
 ## Local Development
 
 The binary targets the Raspberry Pi through the use of a Cargo feature which is enabled by default.
