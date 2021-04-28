@@ -1,4 +1,3 @@
-use crate::garage::Button;
 use crate::garage::Door;
 use crate::garage::Garage;
 use std::convert::Infallible;
@@ -10,6 +9,7 @@ use warp::http::Uri;
 use warp::Filter;
 use warp::Rejection;
 use warp::Reply;
+use crate::board::BoardRelay;
 
 fn with_garage(garage: Garage) -> impl Filter<Extract = (Garage,), Error = Infallible> + Clone {
 	warp::any().map(move || garage.clone())
@@ -39,9 +39,9 @@ async fn index(garage: Garage) -> Result<impl Reply, Infallible> {
 			}
 			Door::Discrete {
 				name,
-				open_button: _,
-				close_button: _,
-				stop_button,
+				open_relay: _,
+				close_relay: _,
+				stop_relay: stop_button,
 			} => {
 				html.push_str(&format!(
 					r#"<h2>{}</h2>
@@ -80,45 +80,45 @@ async fn lookup_door(id: usize, garage: Garage) -> Result<Door, Rejection> {
 	Ok(door.to_owned())
 }
 
-async fn extract_toggle_button(door: Door) -> Result<Arc<Box<dyn Button>>, Rejection> {
+async fn extract_toggle_relay(door: Door) -> Result<Arc<dyn BoardRelay>, Rejection> {
 	match door {
-		Door::Toggle { name: _, button } => Ok(button),
+		Door::Toggle { name: _, relay: button } => Ok(button),
 		Door::Discrete { .. } => Err(warp::reject()),
 	}
 }
 
-async fn extract_open_button(door: Door) -> Result<Arc<Box<dyn Button>>, Rejection> {
+async fn extract_open_relay(door: Door) -> Result<Arc<dyn BoardRelay>, Rejection> {
 	match door {
 		Door::Toggle { .. } => Err(warp::reject()),
 		Door::Discrete {
 			name: _,
-			open_button,
-			close_button: _,
-			stop_button: _,
+			open_relay: open_button,
+			close_relay: _,
+			stop_relay: _,
 		} => Ok(open_button),
 	}
 }
 
-async fn extract_close_button(door: Door) -> Result<Arc<Box<dyn Button>>, Rejection> {
+async fn extract_close_relay(door: Door) -> Result<Arc<dyn BoardRelay>, Rejection> {
 	match door {
 		Door::Toggle { .. } => Err(warp::reject()),
 		Door::Discrete {
 			name: _,
-			open_button: _,
-			close_button,
-			stop_button: _,
+			open_relay: _,
+			close_relay: close_button,
+			stop_relay: _,
 		} => Ok(close_button),
 	}
 }
 
-async fn extract_stop_button(door: Door) -> Result<Arc<Box<dyn Button>>, Rejection> {
+async fn extract_stop_relay(door: Door) -> Result<Arc<dyn BoardRelay>, Rejection> {
 	match door {
 		Door::Toggle { .. } => Err(warp::reject()),
 		Door::Discrete {
 			name: _,
-			open_button: _,
-			close_button: _,
-			stop_button,
+			open_relay: _,
+			close_relay: _,
+			stop_relay: stop_button,
 		} => match stop_button {
 			None => Err(warp::reject()),
 			Some(stop_button) => Ok(stop_button),
@@ -126,9 +126,9 @@ async fn extract_stop_button(door: Door) -> Result<Arc<Box<dyn Button>>, Rejecti
 	}
 }
 
-async fn trigger_button(button: Arc<Box<dyn Button>>) -> Result<impl Reply, Rejection> {
-	let button = button.clone();
-	button.trigger().await;
+async fn toggle_relay(relay: Arc<dyn BoardRelay>) -> Result<impl Reply, Rejection> {
+	let mut relay = relay.clone();
+	relay.toggle().await;
 
 	Ok(warp::redirect::see_other(Uri::from_static("/")))
 }
@@ -143,29 +143,29 @@ pub async fn listen(garage: Garage, port: u16) {
 		.and(warp::post())
 		.and(with_garage(garage.clone()))
 		.and_then(self::lookup_door)
-		.and_then(self::extract_toggle_button)
-		.and_then(self::trigger_button);
+		.and_then(self::extract_toggle_relay)
+		.and_then(self::toggle_relay);
 
 	let door_open = warp::path!("door" / usize / "open")
 		.and(warp::post())
 		.and(with_garage(garage.clone()))
 		.and_then(self::lookup_door)
-		.and_then(self::extract_open_button)
-		.and_then(self::trigger_button);
+		.and_then(self::extract_open_relay)
+		.and_then(self::toggle_relay);
 
 	let door_close = warp::path!("door" / usize / "close")
 		.and(warp::post())
 		.and(with_garage(garage.clone()))
 		.and_then(self::lookup_door)
-		.and_then(self::extract_close_button)
-		.and_then(self::trigger_button);
+		.and_then(self::extract_close_relay)
+		.and_then(self::toggle_relay);
 
 	let door_stop = warp::path!("door" / usize / "stop")
 		.and(warp::post())
 		.and(with_garage(garage.clone()))
 		.and_then(self::lookup_door)
-		.and_then(self::extract_stop_button)
-		.and_then(self::trigger_button);
+		.and_then(self::extract_stop_relay)
+		.and_then(self::toggle_relay);
 
 	let routes = index
 		.or(door_toggle)

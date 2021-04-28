@@ -5,15 +5,15 @@ use structopt::clap::Error as ClapError;
 use structopt::clap::ErrorKind::InvalidValue;
 use tracing::debug;
 
+use crate::board_pins::PinBasedBoard;
 use crate::config::GarageConfig;
 use crate::config::RelayConfig;
 use crate::garage::Garage;
 use crate::gpio::Gpio;
-use crate::board_simple::SimpleBoard;
 
 mod board;
 
-mod board_simple;
+mod board_pins;
 
 mod cli;
 
@@ -46,28 +46,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn create_garage(config: &GarageConfig) -> Result<Garage, Box<dyn Error>> {
-	let pins = match &config.relays {
-		RelayConfig::BoardBased { board } => {
-			match board.as_ref() {
-				// https://pinout.xyz/pinout/automation_hat_mini
-				"PIM487" => vec![16u8],
-				// https://pinout.xyz/pinout/automation_phat
-				"PIM221" => vec![16u8],
-				// https://pinout.xyz/pinout/automation_hat
-				"PIM213" => vec![13u8, 19u8, 16u8],
-				// https://bc-robotics.com/shop/raspberry-pi-zero-relay-hat/
-				// https://bc-robotics.com/shop/raspberry-pi-zero-relay-hat-assembled/
-				"RAS-109" | "RAS-194" => vec![4u8, 17u8],
-				_ => {
-					ClapError::with_description("Unknown board model", InvalidValue).exit();
-				}
+	let gpio = create_gpio()?;
+	let board = match &config.relays {
+		RelayConfig::BoardBased { board } => match board::from_name(&gpio, board) {
+			None => {
+				ClapError::with_description("Unknown board model", InvalidValue).exit();
 			}
-		}
-		RelayConfig::PinBased { pins } => pins.to_vec(),
+			Some(board) => board,
+		},
+		RelayConfig::PinBased { pins } => PinBasedBoard::new(&gpio, pins),
 	};
-	debug!("Relays pins {:?}", &pins);
-
-	let board = SimpleBoard::new(&pins);
 
 	if config.doors.is_empty() {
 		ClapError::with_description("No doors defined", InvalidValue).exit();
@@ -77,20 +65,19 @@ fn create_garage(config: &GarageConfig) -> Result<Garage, Box<dyn Error>> {
 		.doors
 		.iter()
 		.fold(0, |count, door| count + door.relay_count()) as usize;
-	if door_relay_count > pins.len() {
+	if door_relay_count > board.relays() {
 		ClapError::with_description(
 			&format!(
 				"Door relay usage ({}) must not exceed available board relay count ({})",
 				door_relay_count,
-				pins.len(),
+				board.relays(),
 			),
 			InvalidValue,
 		)
 		.exit();
 	}
 
-	let gpio = create_gpio()?;
-	Garage::new(&*gpio, &config, &pins)
+	Garage::new(&config, &board)
 }
 
 #[cfg(feature = "rpi")]

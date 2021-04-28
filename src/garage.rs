@@ -1,13 +1,9 @@
+use crate::board::Board;
+use crate::board::BoardRelay;
 use crate::config::DoorConfig;
 use crate::config::GarageConfig;
-use crate::gpio::Gpio;
-use crate::gpio::GpioPin;
-use async_trait::async_trait;
 use std::error::Error;
 use std::sync::Arc;
-use tokio::sync::Mutex;
-use tokio::time::Duration;
-use tracing::debug;
 
 #[derive(Clone)]
 pub struct Garage {
@@ -15,59 +11,38 @@ pub struct Garage {
 }
 
 impl Garage {
-	pub fn new(
-		gpio: &dyn Gpio,
-		config: &GarageConfig,
-		pins: &[u8],
-	) -> Result<Garage, Box<dyn Error>> {
-		let doors: Result<Vec<Door>, _> = config
+	pub fn new(config: &GarageConfig, board: &impl Board) -> Result<Garage, Box<dyn Error>> {
+		let doors: Vec<Door> = config
 			.doors
 			.iter()
 			.map(|door| match door {
-				DoorConfig::ToggleButton { name, relay } => gpio.get(pins[*relay - 1]).map(|pin| {
-					let button = GpioButton {
-						pin: Mutex::new(pin),
-					};
+				DoorConfig::ToggleButton { name, relay } => {
+					let relay1 = board.relay(*relay - 1);
 					Door::Toggle {
 						name: name.to_string(),
-						button: Arc::new(Box::new(button) as Box<dyn Button>),
+						relay: Arc::new(relay1),
 					}
-				}),
+				}
 				DoorConfig::DiscreteButtons {
 					name,
 					open_relay,
 					close_relay,
 					stop_relay,
-				} => gpio.get(pins[*open_relay - 1]).and_then(|open_pin| {
-					gpio.get(pins[*close_relay - 1]).and_then(|close_pin| {
-						stop_relay
-							.map(|stop_relay| gpio.get(pins[stop_relay - 1]))
-							.transpose()
-							.map(|stop_pin| {
-								let open_button = GpioButton {
-									pin: Mutex::new(open_pin),
-								};
-								let close_button = GpioButton {
-									pin: Mutex::new(close_pin),
-								};
-								Door::Discrete {
-									name: name.to_string(),
-									open_button: Arc::new(Box::new(open_button) as Box<dyn Button>),
-									close_button: Arc::new(Box::new(close_button) as Box<dyn Button>),
-									stop_button: stop_pin.map(|pin| {
-										let stop_button = GpioButton {
-											pin: Mutex::new(pin),
-										};
-										Arc::new(Box::new(stop_button) as Box<dyn Button>)
-									}),
-								}
-							})
-					})
-				}),
+				} => {
+					let open_relay1 = board.relay(*open_relay - 1);
+					let close_relay1 = board.relay(*close_relay - 1);
+					let stop_relay1 = stop_relay.map(|stop_relay| board.relay(stop_relay - 1));
+					Door::Discrete {
+						name: name.to_string(),
+						open_relay: Arc::new(open_relay1),
+						close_relay: Arc::new(close_relay1),
+						stop_relay: stop_relay1.map(|relay| Arc::new(relay)),
+					}
+				}
 			})
 			.collect();
 
-		Ok(Garage { doors: doors? })
+		Ok(Garage { doors })
 	}
 }
 
@@ -75,36 +50,12 @@ impl Garage {
 pub enum Door {
 	Toggle {
 		name: String,
-		button: Arc<Box<dyn Button>>,
+		relay: Arc<dyn BoardRelay>,
 	},
 	Discrete {
 		name: String,
-		open_button: Arc<Box<dyn Button>>,
-		close_button: Arc<Box<dyn Button>>,
-		stop_button: Option<Arc<Box<dyn Button>>>,
+		open_relay: Arc<dyn BoardRelay>,
+		close_relay: Arc<dyn BoardRelay>,
+		stop_relay: Option<Arc<dyn BoardRelay>>,
 	},
-}
-
-#[async_trait]
-pub trait Button: Sync + Send {
-	async fn trigger(&self);
-}
-
-struct GpioButton {
-	pin: Mutex<Box<dyn GpioPin>>,
-}
-
-#[async_trait]
-impl Button for GpioButton {
-	async fn trigger(&self) {
-		let mut pin = self.pin.lock().await;
-
-		debug!("Setting pin {} HIGH", pin.pin());
-		pin.set_high();
-
-		tokio::time::sleep(Duration::from_millis(200)).await;
-
-		debug!("Setting pin {} LOW", pin.pin());
-		pin.set_low();
-	}
 }

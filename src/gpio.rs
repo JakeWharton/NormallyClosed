@@ -4,7 +4,7 @@ pub trait Gpio {
 	fn get(&self, pin: u8) -> Result<Box<dyn GpioPin>, Box<dyn Error>>;
 }
 
-pub trait GpioPin: Send + Sync {
+pub trait GpioPin {
 	fn pin(&self) -> u8;
 	fn set_high(&mut self);
 	fn set_low(&mut self);
