@@ -8,6 +8,7 @@ pub fn parse_args() -> Args {
 #[derive(Debug, StructOpt)]
 #[structopt()]
 pub struct Args {
+	/// TOML configuration file. See https://github.com/JakeWharton/NormallyClosed#configuration
 	#[structopt(parse(from_os_str))]
 	pub config_file: PathBuf,
 

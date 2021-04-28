@@ -216,7 +216,7 @@ OPTIONS:
         --http-port <port>    HTTP port [default: 31415]
 
 ARGS:
-    <config-file>
+    <config-file>    TOML configuration file. See https://github.com/JakeWharton/NormallyClosed#configuration
 ```
 
 ### Other
