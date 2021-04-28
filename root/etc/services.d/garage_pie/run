@@ -1,5 +1,5 @@
 #!/usr/bin/with-contenv sh
 
-/app/normally-closed \
+exec /app/normally-closed \
 	--http-port 80 \
-	"${NC_ARGS[@]}"
+	/data/config.toml
