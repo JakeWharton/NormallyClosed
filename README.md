@@ -30,7 +30,9 @@ $ cargo run --no-default-features config.example.toml
 ```
 And then click the link!
 
-![](images/screenshot1.png)
+![Example screenshot of website in browser](images/screenshot1.png)
+
+Press the buttons to see the changes to GPIO pins that would happen on a real Raspberry Pi.
 
 ## Hardware
 
