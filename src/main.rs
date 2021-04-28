@@ -92,6 +92,7 @@ fn create_gpio() -> Result<Box<dyn Gpio>, Box<dyn Error>> {
 	Ok(Box::new(gpio) as Box<dyn Gpio>)
 }
 
+#[allow(clippy::unnecessary_wraps)] // Maintaining source/binary compatibility with 'rpi' variant.
 #[cfg(not(feature = "rpi"))]
 fn create_gpio() -> Result<Box<dyn Gpio>, Box<dyn Error>> {
 	Ok(Box::new(gpio::LoggingGpio::new()) as Box<dyn Gpio>)
