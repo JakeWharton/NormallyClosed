@@ -59,9 +59,10 @@ mod test {
 	use crate::config::DoorConfig::DiscreteButtons;
 	use crate::config::DoorConfig::ToggleButton;
 	use crate::config::RelayConfig::BoardBased;
+	use crate::config::RelayConfig::PinBased;
 
 	#[test]
-	fn test() {
+	fn named_board() {
 		let actual = parse_config(
 			r#"
 			version = 0
@@ -110,6 +111,36 @@ mod test {
 					stop_relay: Some(6),
 				},
 			],
+		};
+
+		assert_eq!(actual, expected);
+	}
+
+	#[test]
+	fn pins() {
+		let actual = parse_config(
+			r#"
+			version = 0
+
+			[relays]
+			pins = [11, 13, 15, 17]
+
+			[[door]]
+			name = "Door"
+			relay = 1
+			"#,
+		)
+		.unwrap();
+
+		let expected = GarageConfig {
+			version: 0,
+			relays: PinBased {
+				pins: vec![11u8, 13u8, 15u8, 17u8],
+			},
+			doors: vec![ToggleButton {
+				name: "Door".to_string(),
+				relay: 1,
+			}],
 		};
 
 		assert_eq!(actual, expected);
