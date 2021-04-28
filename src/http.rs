@@ -53,7 +53,7 @@ async fn index(garage: Garage) -> Result<impl Reply, Infallible> {
 		</form>"#,
 					name, i, i
 				));
-				if let Some(_) = stop_button {
+				if stop_button.is_some() {
 					html.push_str(&format!(
 						r#"<form action="/door/{}/stop" method="post">
 		<input type="submit" value="Stop">

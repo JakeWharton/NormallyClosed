@@ -38,7 +38,7 @@ pub enum DoorConfig {
 
 impl DoorConfig {
 	pub fn relay_count(&self) -> u8 {
-		return match self {
+		match self {
 			DoorConfig::ToggleButton { .. } => 1,
 			DoorConfig::DiscreteButtons {
 				name: _,
@@ -49,7 +49,7 @@ impl DoorConfig {
 				None => 2,
 				Some(_) => 3,
 			},
-		};
+		}
 	}
 }
 

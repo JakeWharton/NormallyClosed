@@ -13,6 +13,7 @@ pub trait GpioPin: Send + Sync {
 pub struct LoggingGpio {}
 
 impl LoggingGpio {
+	#[allow(dead_code)] // Only used when default features are disabled.
 	pub fn new() -> LoggingGpio {
 		LoggingGpio {}
 	}
