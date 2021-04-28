@@ -337,6 +337,10 @@ Disabling the default feature will allow you to run locally with GPIO pin change
 - I probably didn't know it existed.
 - I had two Raspberry Pi 3b boards lying around and paternity leave time.
 
+### Why?
+
+- I had two Raspberry Pi 3b boards lying around and paternity leave time.
+
 
 # License
 
