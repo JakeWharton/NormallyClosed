@@ -1,0 +1,13 @@
+version = 0
+
+[relays]
+board = "PIM213"
+
+[[door]]
+name = "Left"
+relay = 1
+
+[[door]]
+name = "Right"
+open_relay = 2
+close_relay = 3

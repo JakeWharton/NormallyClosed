@@ -203,5 +203,7 @@ pub async fn listen(garage: Garage, port: u16) {
 		.with(warp::trace::request());
 
 	let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), port);
+	println!("HTTP listening at http://{}", address);
+
 	warp::serve(routes).run(address).await
 }

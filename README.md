@@ -22,6 +22,16 @@ Or, at least, in a way with complexity that I'm comfortable with.
 - No polish. Will not pass the Significant-Other Bar™ out-of-the-box.
 
 
+## Quickstart
+
+Just want to try it out? If you have Cargo installed, clone and run:
+```
+$ cargo run --no-default-features config.example.toml
+```
+And then click the link!
+
+![](images/screenshot1.png)
+
 ## Hardware
 
 You will need to obtain three main components:
@@ -301,7 +311,8 @@ In either form, all doors must have names, relays use 1-based indexing, and no d
 Visit the website in a browser.
 Click the buttons!
 
-![Example screenshot of website in browser](images/screenshot.png)
+![Example screenshot of website in browser](images/screenshot1.png)
+![Example screenshot of website in browser](images/screenshot2.png)
 
 Your URL will depend on the hostname of the Pi and the port you choose.
 
