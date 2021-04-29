@@ -352,7 +352,13 @@ Disabling the default feature will allow you to run locally with GPIO pin change
 
 ### Why?
 
-- I had two Raspberry Pi 3b boards lying around and paternity leave time.
+I had two Raspberry Pi 3b boards lying around and paternity leave time.
+
+### How do I access this outside of my home network?
+
+This is your problem!
+
+I personally use WireGuard to jump into my home network and connect directly to each Pi.
 
 
 # License
