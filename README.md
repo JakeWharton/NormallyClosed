@@ -97,14 +97,17 @@ Attach the wire to the relays. You should use the "Common" (COM) and "Normally O
 ![Pi with wires inside the case](images/p0_with_wires_in_case.jpg)
 
 The case does not have mounting holes. The assembly is light enough that poster-mounting squares
-or other double-sided adhesive could be used. I sank a screw above and below the case to secure it.
+or other double-sided adhesive could be used. I sank two screws below and one above the case to
+secure it.
 
-TODO image of mounting, I didn't actually do this yet.
+[![Case mounted to the wall adjacent to door opener](images/p0_case_mounted_thumbnail.jpg)](images/p0_case_mounted.jpg)
 
 Attach the other end of the wires to the garage door motor unit in the same terminals as the wall
 buttons.
 
-TODO image of attached, I didn't actually do this yet.
+[![Close-up of wiring to common, open, and close terminals inside opener](images/p0_wired_terminals_thumbnail.jpg)](images/p0_wired_terminals.jpg)
+[![Mounted case with wires attached to garage door opener terminal](images/p0_wired_thumbnail.jpg)](images/p0_wired.jpg)
+[![Mounted case with wires running into garage door opener](images/p0_done_thumbnail.jpg)](images/p0_done.jpg)
 
 
 ### Example Build #2: Pi 3/4
