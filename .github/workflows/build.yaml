@@ -36,7 +36,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  release_build:
+  release_armv7_build:
     runs-on: ubuntu-latest
 
     steps:
@@ -58,8 +58,33 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: normally-closed
+          name: normally-closed-armv7
           path: target/armv7-unknown-linux-musleabihf/release/normally-closed
+
+  release_armv6_build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          target: arm-unknown-linux-musleabihf
+
+      - run: sudo apt-get install binutils-arm-linux-gnueabihf
+
+      - uses: actions-rs/cargo@v1
+        name: cargo build
+        with:
+          command: build
+          args: --release --target arm-unknown-linux-musleabihf
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: normally-closed-armv6
+          path: target/arm-unknown-linux-musleabihf/release/normally-closed
 
   rustfmt:
     runs-on: ubuntu-latest
