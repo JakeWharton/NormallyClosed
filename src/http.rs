@@ -1,6 +1,7 @@
 use crate::garage::Button;
 use crate::garage::Door;
 use crate::garage::Garage;
+use serde::Serialize;
 use std::convert::Infallible;
 use std::net::IpAddr;
 use std::net::Ipv4Addr;
@@ -100,6 +101,44 @@ a:hover {
 	Ok(warp::reply::html(html))
 }
 
+#[derive(Serialize)]
+struct GarageJson {
+	version: u8,
+	doors: Vec<DoorJson>,
+}
+
+#[derive(Serialize)]
+#[serde(untagged)]
+enum DoorJson {
+	Toggle { name: String },
+	Discrete { name: String, stop_button: bool },
+}
+
+async fn doors_json(garage: Garage) -> Result<impl Reply, Infallible> {
+	let json_doors: Vec<DoorJson> = garage
+		.doors
+		.into_iter()
+		.map(|door| match door {
+			Door::Toggle { name, button: _ } => DoorJson::Toggle { name },
+			Door::Discrete {
+				name,
+				open_button: _,
+				close_button: _,
+				stop_button,
+			} => DoorJson::Discrete {
+				name,
+				stop_button: stop_button.is_some(),
+			},
+		})
+		.collect();
+	let json_garage = GarageJson {
+		version: 0,
+		doors: json_doors,
+	};
+
+	Ok(warp::reply::json(&json_garage))
+}
+
 async fn lookup_door(id: usize, garage: Garage) -> Result<Door, Rejection> {
 	if id >= garage.doors.len() {
 		return Err(warp::reject());
@@ -167,6 +206,11 @@ pub async fn listen(garage: Garage, port: u16) {
 		.and(with_garage(garage.clone()))
 		.and_then(self::index);
 
+	let doors_json = warp::path!("doors.json")
+		.and(warp::get())
+		.and(with_garage(garage.clone()))
+		.and_then(self::doors_json);
+
 	let door_toggle = warp::path!("door" / usize / "toggle")
 		.and(warp::post())
 		.and(with_garage(garage.clone()))
@@ -196,6 +240,7 @@ pub async fn listen(garage: Garage, port: u16) {
 		.and_then(self::trigger_button);
 
 	let routes = index
+		.or(doors_json)
 		.or(door_toggle)
 		.or(door_open)
 		.or(door_close)
