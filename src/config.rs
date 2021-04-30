@@ -2,13 +2,19 @@ use serde::Deserialize;
 use toml::de::Error;
 
 pub fn parse_config(s: &str) -> Result<GarageConfig, Error> {
+	let config = toml::from_str(s)?;
+
+	// TODO check version is 0
 	// TODO check relay indices are not used more than once
-	toml::from_str(s)
+
+	Ok(config)
 }
 
 #[derive(Debug, PartialEq, Deserialize)]
 pub struct GarageConfig {
 	pub version: u32,
+	#[serde(default)]
+	pub secondary_hosts: Vec<String>, // TODO use some type to parse authority (host+ip)
 	pub relays: RelayConfig,
 	#[serde(rename = "door")]
 	pub doors: Vec<DoorConfig>,
@@ -66,6 +72,9 @@ mod test {
 		let actual = parse_config(
 			r#"
 			version = 0
+			secondary_hosts = [
+				"example.com:1234",
+			]
 
 			[relays]
 			board = "example_board"
@@ -90,6 +99,7 @@ mod test {
 
 		let expected = GarageConfig {
 			version: 0,
+			secondary_hosts: vec!["example.com:1234".to_owned()],
 			relays: BoardBased {
 				board: "example_board".to_string(),
 			},
@@ -134,6 +144,7 @@ mod test {
 
 		let expected = GarageConfig {
 			version: 0,
+			secondary_hosts: vec![],
 			relays: PinBased {
 				pins: vec![11u8, 13u8, 15u8, 17u8],
 			},
