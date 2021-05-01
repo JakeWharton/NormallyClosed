@@ -28,9 +28,12 @@ impl Garage {
 					let button = GpioButton {
 						pin: Mutex::new(pin),
 					};
-					Door::Toggle {
+					Door {
 						name: name.to_string(),
-						button: Arc::new(Box::new(button) as Box<dyn Button>),
+						host: None,
+						control: DoorControl::Toggle {
+							button: Arc::new(Box::new(button) as Box<dyn Button>),
+						},
 					}
 				}),
 				DoorConfig::DiscreteButtons {
@@ -50,16 +53,19 @@ impl Garage {
 								let close_button = GpioButton {
 									pin: Mutex::new(close_pin),
 								};
-								Door::Discrete {
+								Door {
 									name: name.to_string(),
-									open_button: Arc::new(Box::new(open_button) as Box<dyn Button>),
-									close_button: Arc::new(Box::new(close_button) as Box<dyn Button>),
-									stop_button: stop_pin.map(|pin| {
-										let stop_button = GpioButton {
-											pin: Mutex::new(pin),
-										};
-										Arc::new(Box::new(stop_button) as Box<dyn Button>)
-									}),
+									host: None,
+									control: DoorControl::Discrete {
+										open_button: Arc::new(Box::new(open_button) as Box<dyn Button>),
+										close_button: Arc::new(Box::new(close_button) as Box<dyn Button>),
+										stop_button: stop_pin.map(|pin| {
+											let stop_button = GpioButton {
+												pin: Mutex::new(pin),
+											};
+											Arc::new(Box::new(stop_button) as Box<dyn Button>)
+										}),
+									},
 								}
 							})
 					})
@@ -72,13 +78,19 @@ impl Garage {
 }
 
 #[derive(Clone)]
-pub enum Door {
+pub struct Door {
+	pub name: String,
+	/// The secondary host which is providing this door, or None if provided locally.
+	pub host: Option<String>,
+	pub control: DoorControl,
+}
+
+#[derive(Clone)]
+pub enum DoorControl {
 	Toggle {
-		name: String,
 		button: Arc<Box<dyn Button>>,
 	},
 	Discrete {
-		name: String,
 		open_button: Arc<Box<dyn Button>>,
 		close_button: Arc<Box<dyn Button>>,
 		stop_button: Option<Arc<Box<dyn Button>>>,

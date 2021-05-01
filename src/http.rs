@@ -1,5 +1,5 @@
 use crate::garage::Button;
-use crate::garage::Door;
+use crate::garage::DoorControl;
 use crate::garage::Garage;
 use serde::Serialize;
 use std::convert::Infallible;
@@ -29,6 +29,11 @@ body {
 	color: #fff;
 	font-family: Arial, Helvetica, sans-serif;
 }
+h1 small {
+	font-size: 0.5em;
+	font-weight: normal;
+	opacity: 0.5;
+}
 form {
 	display: inline-block;
 }
@@ -42,6 +47,7 @@ footer {
 }
 a, a:visited, a:hover, a:active {
 	color: #fff;
+	text-decoration: underline dotted;
 }
 a:hover {
 	text-decoration: underline;
@@ -52,39 +58,46 @@ a:hover {
 "#
 	.to_string();
 	for (i, door) in garage.doors.iter().enumerate() {
-		match door {
-			Door::Toggle { name, .. } => {
+		html.push_str("<h1>");
+		html.push_str(&door.name);
+		if let Some(host) = &door.host {
+			html.push_str(r#" <small>via <a href="http://"#);
+			html.push_str(host);
+			html.push_str(r#"">"#);
+			html.push_str(host);
+			html.push_str("</a>");
+		}
+		html.push_str("</h1>\n");
+		match &door.control {
+			DoorControl::Toggle { .. } => {
 				html.push_str(&format!(
-					r#"<h1>{}</h1>
-		<form action="/door/{}/toggle" method="post">
-		<input type="submit" value="Toggle">
-		</form>
+					r#"<form action="/door/{}/toggle" method="post">
+<input type="submit" value="Toggle">
+</form>
 "#,
-					name, i
+					i
 				));
 			}
-			Door::Discrete {
-				name,
+			DoorControl::Discrete {
 				open_button: _,
 				close_button: _,
 				stop_button,
 			} => {
 				html.push_str(&format!(
-					r#"<h1>{}</h1>
-		<form action="/door/{}/open" method="post">
-		<input type="submit" value="Open">
-		</form>
-		<form action="/door/{}/close" method="post">
-		<input type="submit" value="Close">
-		</form>
+					r#"<form action="/door/{}/open" method="post">
+<input type="submit" value="Open">
+</form>
+<form action="/door/{}/close" method="post">
+<input type="submit" value="Close">
+</form>
 "#,
-					name, i, i
+					i, i
 				));
 				if stop_button.is_some() {
 					html.push_str(&format!(
 						r#"<form action="/door/{}/stop" method="post">
-		<input type="submit" value="Stop">
-		</form>
+<input type="submit" value="Stop">
+</form>
 "#,
 						i
 					));
@@ -94,7 +107,7 @@ a:hover {
 	}
 	html.push_str(
 		r#"<footer>Powered by <a href="https://github.com/JakeWharton/NormallyClosed">NormallyClosed</a>.</footer>
-	</body>
+</body>
 </html>"#,
 	);
 
@@ -118,15 +131,14 @@ async fn doors_json(garage: Garage) -> Result<impl Reply, Infallible> {
 	let json_doors: Vec<DoorJson> = garage
 		.doors
 		.into_iter()
-		.map(|door| match door {
-			Door::Toggle { name, button: _ } => DoorJson::Toggle { name },
-			Door::Discrete {
-				name,
+		.map(|door| match door.control {
+			DoorControl::Toggle { .. } => DoorJson::Toggle { name: door.name },
+			DoorControl::Discrete {
 				open_button: _,
 				close_button: _,
 				stop_button,
 			} => DoorJson::Discrete {
-				name,
+				name: door.name,
 				stop_button: stop_button.is_some(),
 			},
 		})
@@ -139,26 +151,25 @@ async fn doors_json(garage: Garage) -> Result<impl Reply, Infallible> {
 	Ok(warp::reply::json(&json_garage))
 }
 
-async fn lookup_door(id: usize, garage: Garage) -> Result<Door, Rejection> {
+async fn lookup_door(id: usize, garage: Garage) -> Result<DoorControl, Rejection> {
 	if id >= garage.doors.len() {
 		return Err(warp::reject());
 	}
 	let door = &garage.doors[id];
-	Ok(door.to_owned())
+	Ok(door.control.to_owned())
 }
 
-async fn extract_toggle_button(door: Door) -> Result<Arc<Box<dyn Button>>, Rejection> {
+async fn extract_toggle_button(door: DoorControl) -> Result<Arc<Box<dyn Button>>, Rejection> {
 	match door {
-		Door::Toggle { name: _, button } => Ok(button),
-		Door::Discrete { .. } => Err(warp::reject()),
+		DoorControl::Toggle { button } => Ok(button),
+		DoorControl::Discrete { .. } => Err(warp::reject()),
 	}
 }
 
-async fn extract_open_button(door: Door) -> Result<Arc<Box<dyn Button>>, Rejection> {
+async fn extract_open_button(door: DoorControl) -> Result<Arc<Box<dyn Button>>, Rejection> {
 	match door {
-		Door::Toggle { .. } => Err(warp::reject()),
-		Door::Discrete {
-			name: _,
+		DoorControl::Toggle { .. } => Err(warp::reject()),
+		DoorControl::Discrete {
 			open_button,
 			close_button: _,
 			stop_button: _,
@@ -166,11 +177,10 @@ async fn extract_open_button(door: Door) -> Result<Arc<Box<dyn Button>>, Rejecti
 	}
 }
 
-async fn extract_close_button(door: Door) -> Result<Arc<Box<dyn Button>>, Rejection> {
+async fn extract_close_button(door: DoorControl) -> Result<Arc<Box<dyn Button>>, Rejection> {
 	match door {
-		Door::Toggle { .. } => Err(warp::reject()),
-		Door::Discrete {
-			name: _,
+		DoorControl::Toggle { .. } => Err(warp::reject()),
+		DoorControl::Discrete {
 			open_button: _,
 			close_button,
 			stop_button: _,
@@ -178,11 +188,10 @@ async fn extract_close_button(door: Door) -> Result<Arc<Box<dyn Button>>, Reject
 	}
 }
 
-async fn extract_stop_button(door: Door) -> Result<Arc<Box<dyn Button>>, Rejection> {
+async fn extract_stop_button(door: DoorControl) -> Result<Arc<Box<dyn Button>>, Rejection> {
 	match door {
-		Door::Toggle { .. } => Err(warp::reject()),
-		Door::Discrete {
-			name: _,
+		DoorControl::Toggle { .. } => Err(warp::reject()),
+		DoorControl::Discrete {
 			open_button: _,
 			close_button: _,
 			stop_button,
