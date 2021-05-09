@@ -75,10 +75,12 @@ jobs:
           command: build
           args: --release --target armv7-unknown-linux-musleabihf
 
+      - run: cp target/armv7-unknown-linux-musleabihf/release/normally-closed normally-closed-armv7
+
       - uses: actions/upload-artifact@v2
         with:
-          name: normally-closed-armv7
-          path: target/armv7-unknown-linux-musleabihf/release/normally-closed
+          name: binaries
+          path: normally-closed-armv7
 
       - uses: actions-rs/cargo@v1
         name: cargo publish --dry-run
@@ -106,10 +108,12 @@ jobs:
           command: build
           args: --release --target arm-unknown-linux-musleabihf
 
+      - run: cp target/arm-unknown-linux-musleabihf/release/normally-closed normally-closed-armv6
+
       - uses: actions/upload-artifact@v2
         with:
-          name: normally-closed-armv6
-          path: target/arm-unknown-linux-musleabihf/release/normally-closed
+          name: binaries
+          path: normally-closed-armv6
 
   publish:
     runs-on: ubuntu-latest
@@ -175,7 +179,7 @@ jobs:
         with:
           body: ${{ steps.release_notes.outputs.release_notes }}
           files: |
-            normally-closed-armv7/normally-closed-armv7
-            normally-closed-armv6/normally-closed-armv6
+            binaries/normally-closed-armv7
+            binaries/normally-closed-armv6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
