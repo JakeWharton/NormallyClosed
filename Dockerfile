@@ -1,5 +1,5 @@
 # Cross-compile the app for musl to create a statically-linked binary for alpine.
-FROM rust:1.50 AS rust
+FROM rust:1.52.0 AS rust
 RUN rustup target add armv7-unknown-linux-musleabihf
 RUN apt-get update && apt-get -y install binutils-arm-linux-gnueabihf
 WORKDIR /app
