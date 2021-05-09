@@ -4,12 +4,10 @@ use crate::gpio::Gpio;
 use crate::gpio::GpioPin;
 use async_trait::async_trait;
 use std::error::Error;
-use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::time::Duration;
 use tracing::debug;
 
-#[derive(Clone)]
 pub struct Garage {
 	pub doors: Vec<Door>,
 }
@@ -32,7 +30,7 @@ impl Garage {
 						name: name.to_string(),
 						host: None,
 						control: DoorControl::Toggle {
-							button: Arc::new(Box::new(button) as Box<dyn Button>),
+							button: Box::new(button) as Box<dyn Button>,
 						},
 					}
 				}),
@@ -57,13 +55,13 @@ impl Garage {
 									name: name.to_string(),
 									host: None,
 									control: DoorControl::Discrete {
-										open_button: Arc::new(Box::new(open_button) as Box<dyn Button>),
-										close_button: Arc::new(Box::new(close_button) as Box<dyn Button>),
+										open_button: Box::new(open_button) as Box<dyn Button>,
+										close_button: Box::new(close_button) as Box<dyn Button>,
 										stop_button: stop_pin.map(|pin| {
 											let stop_button = GpioButton {
 												pin: Mutex::new(pin),
 											};
-											Arc::new(Box::new(stop_button) as Box<dyn Button>)
+											Box::new(stop_button) as Box<dyn Button>
 										}),
 									},
 								}
@@ -77,7 +75,6 @@ impl Garage {
 	}
 }
 
-#[derive(Clone)]
 pub struct Door {
 	pub name: String,
 	/// The secondary host which is providing this door, or None if provided locally.
@@ -85,15 +82,14 @@ pub struct Door {
 	pub control: DoorControl,
 }
 
-#[derive(Clone)]
 pub enum DoorControl {
 	Toggle {
-		button: Arc<Box<dyn Button>>,
+		button: Box<dyn Button>,
 	},
 	Discrete {
-		open_button: Arc<Box<dyn Button>>,
-		close_button: Arc<Box<dyn Button>>,
-		stop_button: Option<Arc<Box<dyn Button>>>,
+		open_button: Box<dyn Button>,
+		close_button: Box<dyn Button>,
+		stop_button: Option<Box<dyn Button>>,
 	},
 }
 

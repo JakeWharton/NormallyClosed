@@ -9,6 +9,8 @@ use crate::config::GarageConfig;
 use crate::config::RelayConfig;
 use crate::garage::Garage;
 use crate::gpio::Gpio;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 mod cli;
 
@@ -34,7 +36,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 	let config = config::parse_config(&config)?;
 	debug!("{:?}", &config);
 
-	let garage = create_garage(&config)?;
+	let garage = Arc::new(Mutex::new(create_garage(&config)?));
 
 	http::listen(garage, args.http_port).await;
 	Ok(())

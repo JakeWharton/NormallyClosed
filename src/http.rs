@@ -7,16 +7,15 @@ use std::net::IpAddr;
 use std::net::Ipv4Addr;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 use warp::http::Uri;
 use warp::Filter;
 use warp::Rejection;
 use warp::Reply;
 
-fn with_garage(garage: Garage) -> impl Filter<Extract = (Garage,), Error = Infallible> + Clone {
-	warp::any().map(move || garage.clone())
-}
+async fn index(garage: Arc<Mutex<Garage>>) -> Result<impl Reply, Infallible> {
+	let garage = garage.lock().await;
 
-async fn index(garage: Garage) -> Result<impl Reply, Infallible> {
 	let mut html = r#"<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -127,18 +126,22 @@ enum DoorJson {
 	Discrete { name: String, stop_button: bool },
 }
 
-async fn doors_json(garage: Garage) -> Result<impl Reply, Infallible> {
+async fn doors_json(garage: Arc<Mutex<Garage>>) -> Result<impl Reply, Infallible> {
+	let garage = garage.lock().await;
+
 	let json_doors: Vec<DoorJson> = garage
 		.doors
-		.into_iter()
-		.map(|door| match door.control {
-			DoorControl::Toggle { .. } => DoorJson::Toggle { name: door.name },
+		.iter()
+		.map(|door| match &door.control {
+			DoorControl::Toggle { .. } => DoorJson::Toggle {
+				name: door.name.clone(),
+			},
 			DoorControl::Discrete {
 				open_button: _,
 				close_button: _,
 				stop_button,
 			} => DoorJson::Discrete {
-				name: door.name,
+				name: door.name.clone(),
 				stop_button: stop_button.is_some(),
 			},
 		})
@@ -151,102 +154,111 @@ async fn doors_json(garage: Garage) -> Result<impl Reply, Infallible> {
 	Ok(warp::reply::json(&json_garage))
 }
 
-async fn lookup_door(id: usize, garage: Garage) -> Result<DoorControl, Rejection> {
+async fn lookup_door(id: usize, garage: &Garage) -> Result<&DoorControl, Rejection> {
 	if id >= garage.doors.len() {
 		return Err(warp::reject());
 	}
 	let door = &garage.doors[id];
-	Ok(door.control.to_owned())
+	Ok(&door.control)
 }
 
-async fn extract_toggle_button(door: DoorControl) -> Result<Arc<Box<dyn Button>>, Rejection> {
-	match door {
-		DoorControl::Toggle { button } => Ok(button),
-		DoorControl::Discrete { .. } => Err(warp::reject()),
+async fn toggle(id: usize, garage: Arc<Mutex<Garage>>) -> Result<impl Reply, Rejection> {
+	let garage = garage.lock().await;
+	let door = lookup_door(id, &garage).await?;
+	if let DoorControl::Toggle { button } = door {
+		trigger_button(&button).await
+	} else {
+		Err(warp::reject())
 	}
 }
 
-async fn extract_open_button(door: DoorControl) -> Result<Arc<Box<dyn Button>>, Rejection> {
-	match door {
-		DoorControl::Toggle { .. } => Err(warp::reject()),
-		DoorControl::Discrete {
-			open_button,
-			close_button: _,
-			stop_button: _,
-		} => Ok(open_button),
+async fn open(id: usize, garage: Arc<Mutex<Garage>>) -> Result<impl Reply, Rejection> {
+	let garage = garage.lock().await;
+	let door = lookup_door(id, &garage).await?;
+	if let DoorControl::Discrete {
+		open_button,
+		close_button: _,
+		stop_button: _,
+	} = door
+	{
+		trigger_button(&open_button).await
+	} else {
+		Err(warp::reject())
 	}
 }
 
-async fn extract_close_button(door: DoorControl) -> Result<Arc<Box<dyn Button>>, Rejection> {
-	match door {
-		DoorControl::Toggle { .. } => Err(warp::reject()),
-		DoorControl::Discrete {
-			open_button: _,
-			close_button,
-			stop_button: _,
-		} => Ok(close_button),
+async fn close(id: usize, garage: Arc<Mutex<Garage>>) -> Result<impl Reply, Rejection> {
+	let garage = garage.lock().await;
+	let door = lookup_door(id, &garage).await?;
+	if let DoorControl::Discrete {
+		open_button: _,
+		close_button,
+		stop_button: _,
+	} = door
+	{
+		trigger_button(&close_button).await
+	} else {
+		Err(warp::reject())
 	}
 }
 
-async fn extract_stop_button(door: DoorControl) -> Result<Arc<Box<dyn Button>>, Rejection> {
-	match door {
-		DoorControl::Toggle { .. } => Err(warp::reject()),
-		DoorControl::Discrete {
-			open_button: _,
-			close_button: _,
-			stop_button,
-		} => match stop_button {
-			None => Err(warp::reject()),
-			Some(stop_button) => Ok(stop_button),
-		},
+async fn stop(id: usize, garage: Arc<Mutex<Garage>>) -> Result<impl Reply, Rejection> {
+	let garage = garage.lock().await;
+	let door = lookup_door(id, &garage).await?;
+	if let DoorControl::Discrete {
+		open_button: _,
+		close_button: _,
+		stop_button,
+	} = door
+	{
+		if let Some(stop_button) = stop_button {
+			trigger_button(&stop_button).await
+		} else {
+			Err(warp::reject())
+		}
+	} else {
+		Err(warp::reject())
 	}
 }
 
-async fn trigger_button(button: Arc<Box<dyn Button>>) -> Result<impl Reply, Rejection> {
-	let button = button.clone();
+async fn trigger_button(button: &Box<dyn Button>) -> Result<impl Reply, Rejection> {
 	button.trigger().await;
 
 	Ok(warp::redirect::see_other(Uri::from_static("/")))
 }
 
-pub async fn listen(garage: Garage, port: u16) {
+pub async fn listen(garage: Arc<Mutex<Garage>>, port: u16) {
+	let garage = warp::any().map(move || garage.clone());
+
 	let index = warp::path::end()
 		.and(warp::get())
-		.and(with_garage(garage.clone()))
+		.and(garage.clone())
 		.and_then(self::index);
 
 	let doors_json = warp::path!("doors.json")
 		.and(warp::get())
-		.and(with_garage(garage.clone()))
+		.and(garage.clone())
 		.and_then(self::doors_json);
 
 	let door_toggle = warp::path!("door" / usize / "toggle")
 		.and(warp::post())
-		.and(with_garage(garage.clone()))
-		.and_then(self::lookup_door)
-		.and_then(self::extract_toggle_button)
-		.and_then(self::trigger_button);
+		.and(garage.clone())
+		.and_then(self::toggle);
 
 	let door_open = warp::path!("door" / usize / "open")
 		.and(warp::post())
-		.and(with_garage(garage.clone()))
-		.and_then(self::lookup_door)
-		.and_then(self::extract_open_button)
-		.and_then(self::trigger_button);
+		.and(garage.clone())
+		.and_then(self::open);
 
 	let door_close = warp::path!("door" / usize / "close")
 		.and(warp::post())
-		.and(with_garage(garage.clone()))
-		.and_then(self::lookup_door)
-		.and_then(self::extract_close_button)
-		.and_then(self::trigger_button);
+		.and(garage.clone())
+		.and_then(self::close);
 
 	let door_stop = warp::path!("door" / usize / "stop")
 		.and(warp::post())
-		.and(with_garage(garage.clone()))
-		.and_then(self::lookup_door)
-		.and_then(self::extract_stop_button)
-		.and_then(self::trigger_button);
+		.and(garage.clone())
+		.and_then(self::stop);
 
 	let routes = index
 		.or(doors_json)
