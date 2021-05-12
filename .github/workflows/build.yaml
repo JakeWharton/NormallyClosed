@@ -20,13 +20,13 @@ jobs:
           profile: minimal
           components: clippy
 
-      - uses: actions-rs/cargo@v1
+      - uses: actions-rs/cargo@v1.0.3
         name: cargo build
         with:
           command: build
           args: --no-default-features
 
-      - uses: actions-rs/cargo@v1
+      - uses: actions-rs/cargo@v1.0.3
         name: cargo test
         with:
           command: test
@@ -50,7 +50,7 @@ jobs:
 
       - run: sudo apt-get install binutils-arm-linux-gnueabihf
 
-      - uses: actions-rs/cargo@v1
+      - uses: actions-rs/cargo@v1.0.3
         name: cargo build
         with:
           command: build
@@ -75,7 +75,7 @@ jobs:
 
       - run: sudo apt-get install binutils-arm-linux-gnueabihf
 
-      - uses: actions-rs/cargo@v1
+      - uses: actions-rs/cargo@v1.0.3
         name: cargo build
         with:
           command: build
@@ -99,7 +99,7 @@ jobs:
           profile: minimal
           components: rustfmt
 
-      - uses: actions-rs/cargo@v1
+      - uses: actions-rs/cargo@v1.0.3
         name: cargo fmt
         with:
           command: fmt
