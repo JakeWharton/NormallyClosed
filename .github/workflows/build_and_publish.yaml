@@ -167,7 +167,7 @@ jobs:
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
 
-      - uses: ffurrer2/extract-release-notes@v1.6.0
+      - uses: ffurrer2/extract-release-notes@v1.7.0
         id: release_notes
         if: startsWith(github.ref, 'refs/tags/')
 
