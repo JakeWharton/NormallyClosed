@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::fs;
 
+use futures::join;
 use structopt::clap::Error as ClapError;
 use structopt::clap::ErrorKind::InvalidValue;
 use tracing::debug;
@@ -9,7 +10,9 @@ use crate::config::GarageConfig;
 use crate::config::RelayConfig;
 use crate::garage::Garage;
 use crate::gpio::Gpio;
+use reqwest::Client;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::Mutex;
 
 mod cli;
@@ -25,6 +28,8 @@ mod gpio_rppal;
 
 mod http;
 
+mod sync;
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
 	tracing_subscriber::fmt::init();
@@ -36,9 +41,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
 	let config = config::parse_config(&config)?;
 	debug!("{:?}", &config);
 
-	let garage = Arc::new(Mutex::new(create_garage(&config)?));
+	let local_garage = create_garage(&config)?;
+	let garage = Arc::new(Mutex::new(local_garage));
 
-	http::listen(garage, args.http_port).await;
+	let http = http::listen(garage.clone(), args.http_port);
+
+	let client = Arc::new(Client::builder().timeout(Duration::from_secs(10)).build()?);
+	let sync = sync::poll(client, garage, config.secondary_hosts);
+
+	let _ = join!(http, sync);
+
 	Ok(())
 }
 

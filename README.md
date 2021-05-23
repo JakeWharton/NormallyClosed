@@ -264,6 +264,20 @@ relay = 2
 
 Always 0 until version 1.0.0 is released.
 
+### `secondary_hosts`
+
+Additional hosts whose doors will be displayed on this host.
+
+```toml
+secondary_hosts = [
+  "http://example.com:1234",
+]
+```
+
+Doors from each host will be updated every minute.
+
+Note: 'https' is not supported at this time.
+
 ### `relays`
 
 Either a named board:

@@ -4,8 +4,9 @@ use crate::gpio::Gpio;
 use crate::gpio::GpioPin;
 use async_trait::async_trait;
 use std::error::Error;
+use std::time::Duration;
 use tokio::sync::Mutex;
-use tokio::time::Duration;
+use tokio::time::sleep;
 use tracing::debug;
 
 pub struct Garage {
@@ -110,7 +111,7 @@ impl Button for GpioButton {
 		debug!("Setting pin {} HIGH", pin.pin());
 		pin.set_high();
 
-		tokio::time::sleep(Duration::from_millis(200)).await;
+		sleep(Duration::from_millis(200)).await;
 
 		debug!("Setting pin {} LOW", pin.pin());
 		pin.set_low();
