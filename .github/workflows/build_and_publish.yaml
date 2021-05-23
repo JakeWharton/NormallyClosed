@@ -75,18 +75,18 @@ jobs:
           command: build
           args: --release --target armv7-unknown-linux-musleabihf
 
+      - uses: actions-rs/cargo@v1.0.3
+        name: cargo publish --dry-run
+        with:
+          command: publish
+          args: --dry-run
+
       - run: cp target/armv7-unknown-linux-musleabihf/release/normally-closed normally-closed-armv7
 
       - uses: actions/upload-artifact@v2
         with:
           name: binaries
           path: normally-closed-armv7
-
-      - uses: actions-rs/cargo@v1.0.3
-        name: cargo publish --dry-run
-        with:
-          command: publish
-          args: --dry-run
 
   release_armv6_build:
     runs-on: ubuntu-latest
