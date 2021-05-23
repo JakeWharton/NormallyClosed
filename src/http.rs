@@ -1,7 +1,8 @@
 use crate::garage::Button;
 use crate::garage::DoorControl;
 use crate::garage::Garage;
-use serde::Serialize;
+use crate::sync;
+use itertools::Itertools;
 use std::convert::Infallible;
 use std::net::IpAddr;
 use std::net::Ipv4Addr;
@@ -56,7 +57,13 @@ a:hover {
 <body>
 "#
 	.to_string();
-	for (i, door) in garage.doors.iter().enumerate() {
+
+	for (i, door) in garage
+		.doors
+		.iter()
+		.sorted_by_key(|door| &door.name)
+		.enumerate()
+	{
 		html.push_str("<h1>");
 		html.push_str(&door.name);
 		if let Some(host) = &door.host {
@@ -64,7 +71,7 @@ a:hover {
 			html.push_str(host);
 			html.push_str(r#"">"#);
 			html.push_str(host);
-			html.push_str("</a>");
+			html.push_str("</a></small>");
 		}
 		html.push_str("</h1>\n");
 		match &door.control {
@@ -113,45 +120,11 @@ a:hover {
 	Ok(warp::reply::html(html))
 }
 
-#[derive(Serialize)]
-struct GarageJson {
-	version: u8,
-	doors: Vec<DoorJson>,
-}
-
-#[derive(Serialize)]
-#[serde(untagged)]
-enum DoorJson {
-	Toggle { name: String },
-	Discrete { name: String, stop_button: bool },
-}
-
 async fn doors_json(garage: Arc<Mutex<Garage>>) -> Result<impl Reply, Infallible> {
 	let garage = garage.lock().await;
 
-	let json_doors: Vec<DoorJson> = garage
-		.doors
-		.iter()
-		.map(|door| match &door.control {
-			DoorControl::Toggle { .. } => DoorJson::Toggle {
-				name: door.name.clone(),
-			},
-			DoorControl::Discrete {
-				open_button: _,
-				close_button: _,
-				stop_button,
-			} => DoorJson::Discrete {
-				name: door.name.clone(),
-				stop_button: stop_button.is_some(),
-			},
-		})
-		.collect();
-	let json_garage = GarageJson {
-		version: 0,
-		doors: json_doors,
-	};
-
-	Ok(warp::reply::json(&json_garage))
+	let json = sync::garage_json(&garage);
+	Ok(warp::reply::json(&json))
 }
 
 async fn lookup_door(id: usize, garage: &Garage) -> Result<&DoorControl, Rejection> {

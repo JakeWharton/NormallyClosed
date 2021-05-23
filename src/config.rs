@@ -14,7 +14,7 @@ pub fn parse_config(s: &str) -> Result<GarageConfig, Error> {
 pub struct GarageConfig {
 	pub version: u32,
 	#[serde(default)]
-	pub secondary_hosts: Vec<String>, // TODO use some type to parse authority (host+ip)
+	pub secondary_hosts: Vec<String>,
 	pub relays: RelayConfig,
 	#[serde(rename = "door")]
 	pub doors: Vec<DoorConfig>,
