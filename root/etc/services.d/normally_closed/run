@@ -1,5 +1,0 @@
-#!/usr/bin/with-contenv sh
-
-exec /app/normally-closed \
-	--http-port 80 \
-	/config/config.toml

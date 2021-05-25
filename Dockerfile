@@ -9,15 +9,19 @@ COPY src ./src
 RUN cargo build --release --target armv7-unknown-linux-musleabihf
 
 
-FROM oznu/s6-alpine:3.13-armhf
+FROM alpine:3.12
 ENV \
-    # Fail if cont-init scripts exit with non-zero code.
-    S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
     # Show full backtraces for crashes.
     RUST_BACKTRACE=full
-COPY root/ /
+RUN apk add --no-cache \
+      tini \
+    && rm -rf /var/cache/* \
+    && mkdir /var/cache/apk
 WORKDIR /app
 COPY --from=rust /app/target/armv7-unknown-linux-musleabihf/release/normally-closed ./
+
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["/app/normally-closed", "--http-port", "80", "/config/config.toml"]
 
 EXPOSE 80
 HEALTHCHECK --interval=1m --timeout=3s \
