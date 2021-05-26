@@ -17,7 +17,7 @@ RUN cargo build --release --target $(cat /rust_target.txt)
 RUN cp target/$(cat /rust_target.txt)/release/normally-closed .
 
 
-FROM alpine:3.12
+FROM alpine:3.13.5
 ENV \
     # Show full backtraces for crashes.
     RUST_BACKTRACE=full
