@@ -1,12 +1,20 @@
 # Cross-compile the app for musl to create a statically-linked binary for alpine.
-FROM rust:1.52.1 AS rust
-RUN rustup target add armv7-unknown-linux-musleabihf
+FROM --platform=$BUILDPLATFORM rust:1.52.1 AS rust
+ARG TARGETPLATFORM
+RUN case "$TARGETPLATFORM" in \
+      "linux/arm/v7") echo armv7-unknown-linux-musleabihf > /rust_target.txt ;; \
+      "linux/arm/v6") echo arm-unknown-linux-musleabihf > /rust_target.txt ;; \
+      *) exit 1 ;; \
+    esac
+RUN rustup target add $(cat /rust_target.txt)
 RUN apt-get update && apt-get -y install binutils-arm-linux-gnueabihf
 WORKDIR /app
 COPY .cargo ./.cargo
 COPY Cargo.toml Cargo.lock .rustfmt.toml ./
 COPY src ./src
-RUN cargo build --release --target armv7-unknown-linux-musleabihf
+RUN cargo build --release --target $(cat /rust_target.txt)
+# Move the binary to a location free of the target since that is not available in the next stage.
+RUN cp target/$(cat /rust_target.txt)/release/normally-closed .
 
 
 FROM alpine:3.12
@@ -18,7 +26,7 @@ RUN apk add --no-cache \
     && rm -rf /var/cache/* \
     && mkdir /var/cache/apk
 WORKDIR /app
-COPY --from=rust /app/target/armv7-unknown-linux-musleabihf/release/normally-closed ./
+COPY --from=rust /app/normally-closed ./
 
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["/app/normally-closed", "--http-port", "80", "/config/config.toml"]
