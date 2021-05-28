@@ -67,7 +67,7 @@ a:hover {
 		html.push_str("<h1>");
 		html.push_str(&door.name);
 		if let Some(host) = &door.host {
-			html.push_str(r#" <small>via <a href="http://"#);
+			html.push_str(r#" <small>via <a href=""#);
 			html.push_str(host);
 			html.push_str(r#"">"#);
 			html.push_str(host);
