@@ -61,8 +61,8 @@ a:hover {
 	for (i, door) in garage
 		.doors
 		.iter()
-		.sorted_by_key(|door| &door.name)
 		.enumerate()
+		.sorted_by_key(|indexed_door| &indexed_door.1.name)
 	{
 		html.push_str("<h1>");
 		html.push_str(&door.name);
