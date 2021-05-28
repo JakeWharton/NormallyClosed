@@ -70,7 +70,11 @@ a:hover {
 			html.push_str(r#" <small>via <a href=""#);
 			html.push_str(host);
 			html.push_str(r#"">"#);
-			html.push_str(host);
+			let host_no_scheme = host
+				.find("://")
+				.map(|index| &host[index + 3..])
+				.unwrap_or(host);
+			html.push_str(host_no_scheme);
 			html.push_str("</a></small>");
 		}
 		html.push_str("</h1>\n");
