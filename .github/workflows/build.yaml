@@ -71,7 +71,7 @@ jobs:
         with:
           toolchain: stable
           profile: minimal
-          target: arm-unknown-linux-musleabihf
+          target: arm-unknown-linux-musleabi
 
       - run: sudo apt-get install binutils-arm-linux-gnueabihf
 
@@ -79,12 +79,12 @@ jobs:
         name: cargo build
         with:
           command: build
-          args: --release --target arm-unknown-linux-musleabihf
+          args: --release --target arm-unknown-linux-musleabi
 
       - uses: actions/upload-artifact@v2
         with:
           name: normally-closed-armv6
-          path: target/arm-unknown-linux-musleabihf/release/normally-closed
+          path: target/arm-unknown-linux-musleabi/release/normally-closed
 
   docker:
     runs-on: ubuntu-latest

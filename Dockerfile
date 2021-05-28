@@ -3,7 +3,7 @@ FROM --platform=$BUILDPLATFORM rust:1.52.1 AS rust
 ARG TARGETPLATFORM
 RUN case "$TARGETPLATFORM" in \
       "linux/arm/v7") echo armv7-unknown-linux-musleabihf > /rust_target.txt ;; \
-      "linux/arm/v6") echo arm-unknown-linux-musleabihf > /rust_target.txt ;; \
+      "linux/arm/v6") echo arm-unknown-linux-musleabi > /rust_target.txt ;; \
       *) exit 1 ;; \
     esac
 RUN rustup target add $(cat /rust_target.txt)
