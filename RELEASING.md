@@ -7,19 +7,25 @@
 
 2. Update `Cargo.toml` with the new version.
 
-3. Commit
+3. Run a local build to ensure `Cargo.lock` updates with the new version.
+
+   ```
+   $ cargo build --no-default-features
+   ```
+
+4. Commit
 
    ```
    $ git commit -am "Prepare version X.Y.X"
    ```
 
-4. Tag
+5. Tag
 
    ```
    $ git tag -am "Version X.Y.Z" X.Y.Z
    ```
 
-5. Push!
+6. Push!
 
    ```
    $ git push && git push --tags
