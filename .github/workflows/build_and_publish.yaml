@@ -170,7 +170,7 @@ jobs:
           labels: ${{ steps.docker_meta.outputs.labels }}
           platforms: linux/arm/v7,linux/arm/v6
 
-      - uses: ffurrer2/extract-release-notes@v1.7.0
+      - uses: ffurrer2/extract-release-notes@v1.8.0
         id: release_notes
         if: startsWith(github.ref, 'refs/tags/')
 
