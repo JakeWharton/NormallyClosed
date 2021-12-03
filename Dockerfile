@@ -1,5 +1,5 @@
 # Cross-compile the app for musl to create a statically-linked binary for alpine.
-FROM --platform=$BUILDPLATFORM rust:1.56.1 AS rust
+FROM --platform=$BUILDPLATFORM rust:1.57.0 AS rust
 ARG TARGETPLATFORM
 RUN case "$TARGETPLATFORM" in \
       "linux/arm/v7") echo armv7-unknown-linux-musleabihf > /rust_target.txt ;; \
