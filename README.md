@@ -2,6 +2,10 @@
 
 Open and close your garage door (or similar) with a Raspberry Pi.
 
+⚠️ **This project is deprecated!**
+There will be no more active development.
+I have personally migrated to Z-Wave (specifically, the Zooz ZEN17) to fit in the with rest of my Z-Wave infrastructure.
+
 Sometimes I forget to close my garage door when I leave the house.
 Sometimes I need to let someone into my house when I am not home.
 This allows me to do both of those things in a low-complexity way.
